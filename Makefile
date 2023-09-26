@@ -5,7 +5,6 @@ OBJ_DIR = object
 SRC_DIR = source
 DEP_DIR = dependencies
 
-
 CC = gcc
 CFLAGS = -Wall -g -MMD -MP -MF $(DEP_DIR)/$*.d -I $(INC_DIR)
 
