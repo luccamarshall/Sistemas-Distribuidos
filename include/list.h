@@ -53,12 +53,14 @@ int list_size(struct list_t *list);
  * reservando toda a memória necessária.
  * Retorna o array de strings ou NULL em caso de erro.
  */
-char **list_get_keys(struct list_t *list);
+char **list_get_keys(struct list_t *list):
 
 /* Função que liberta a memória ocupada pelo array de keys obtido pela 
  * função list_get_keys.
  * Retorna 0 (OK) ou -1 em caso de erro.
  */
-int list_free_keys(char **keys);
+int list_free_keys(char **keys){
+    
+}
 
 #endif
