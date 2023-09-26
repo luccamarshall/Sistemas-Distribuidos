@@ -1,23 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
-<<<<<<< Updated upstream
-
-#include "list.h"
-#include "list-private.h"
-
-struct list_t *list_create() {
-  struct list_t *lista = (struct list_t *) malloc(sizeof(struct list_t));
-
-  if (lista == NULL)
-    return NULL;
-  
-  lista->size = 0;
-  lista->head = NULL;
-
-  return lista;
-}
-=======
 #include "list.h"
 #include "list-private.h"
 
@@ -32,7 +15,8 @@ struct list_t *list_create()
     }
     list->size = 0;
     list->head = NULL;
-    list->tail = NULL;
+    list->head->entry = NULL;
+    list->head->next = NULL;
     return list;
 }
 
@@ -189,4 +173,3 @@ char **list_get_keys(struct list_t *list)
     keys[i] = NULL;
     return keys;
 }
->>>>>>> Stashed changes
