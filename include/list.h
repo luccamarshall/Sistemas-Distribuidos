@@ -59,8 +59,6 @@ char **list_get_keys(struct list_t *list):
  * função list_get_keys.
  * Retorna 0 (OK) ou -1 em caso de erro.
  */
-int list_free_keys(char **keys){
-    
-}
+int list_free_keys(char **keys);
 
 #endif

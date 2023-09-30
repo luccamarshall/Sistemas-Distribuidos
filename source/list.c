@@ -6,18 +6,20 @@
 
 struct list_t;
 
+struct node_t;
+
+
 struct list_t *list_create()
 {
-    struct list_t *list = (struct list_t *)malloc(sizeof(struct list_t));
-    if (list == NULL)
+    struct list_t *new_list = (struct list_t *)malloc(sizeof(struct list_t));
+    if (new_list == NULL)
     {
         return NULL;
     }
-    list->size = 0;
-    list->head = NULL;
-    list->head->entry = NULL;
-    list->head->next = NULL;
-    return list;
+    new_list->size = 0;
+    new_list->head = NULL;
+
+    return new_list;
 }
 
 int list_destroy(struct list_t *list)
@@ -26,71 +28,90 @@ int list_destroy(struct list_t *list)
     {
         return -1;
     }
-    struct node_t *node = list->head;
-    struct node_t *next;
-    while (node != NULL)
+    struct node_t *current = list->head;
+
+    while (current != NULL)
     {
-        next = node->next;
-        entry_destroy(node->entry);
-        free(node);
-        node = next;
+        struct node_t *next = current->next;
+        if (current->entry != NULL)
+        {
+            free(current->entry);
+        }
+        free(current);
+        current = next;
     }
     free(list);
-    return 0;
+
+    return 0; // Sucesso
 }
 
-int list_add(struct list_t *list, struct entry_t *entry)
-{
+int list_add(struct list_t *list, struct entry_t *entry){
     if (list == NULL || entry == NULL)
     {
         return -1;
     }
-    struct node_t *node = list->head;
+    struct node_t *current = list->head;
     struct node_t *prev = NULL;
-    while (node != NULL)
+
+    while (current != NULL)
     {
-        if (entry_compare(node->entry, entry) == 0)
+        int compare_result = entry_compare(current->entry, entry);
+
+        if (compare_result == 0)
         {
+
+            struct entry_t *old_entry = current->entry;
+            current->entry = entry;
+            free_entry(old_entry); 
+            return 1;            
+        }
+        else if (compare_result > 0)
+        {
+            struct node_t *new_node = (struct node_t *)malloc(sizeof(struct node_t));
+            if (new_node == NULL)
+            {
+                return -1; 
+            }
+            new_node->entry = entry;
+            new_node->next = current;
+
             if (prev == NULL)
             {
-                list->head = node->next;
+                list->head = new_node;
             }
             else
             {
-                prev->next = node->next;
+                prev->next = new_node;
             }
-            entry_destroy(node->entry);
-            free(node);
-            list->size--;
-            break;
+            list->size++;
+            return 0; 
         }
-        prev = node;
-        node = node->next;
+
+        prev = current;
+        current = current->next;
     }
-    node = (struct node_t *)malloc(sizeof(struct node_t));
-    if (node == NULL)
+
+    struct node_t *new_node = (struct node_t *)malloc(sizeof(struct node_t));
+    if (new_node == NULL)
     {
-        return -1;
+        return -1; 
     }
-    node->entry = entry_dup(entry);
-    if (node->entry == NULL)
+
+    new_node->entry = entry;
+    new_node->next = NULL;
+
+    if (prev == NULL)
     {
-        free(node);
-        return -1;
-    }
-    node->next = NULL;
-    if (list->head == NULL)
-    {
-        list->head = node;
-        list->tail = node;
+     
+        list->head = new_node;
     }
     else
     {
-        list->tail->next = node;
-        list->tail = node;
+        prev->next = new_node;
     }
+
     list->size++;
-    return 0;
+    return 0; 
 }
 
 int list_remove(struct list_t *list, char *key)
@@ -99,27 +120,30 @@ int list_remove(struct list_t *list, char *key)
     {
         return -1;
     }
-    struct node_t *node = list->head;
+
+    struct node_t *current = list->head;
     struct node_t *prev = NULL;
-    while (node != NULL)
+
+    while (current != NULL)
     {
-        if (strcmp(node->entry->key, key) == 0)
+        if (strcmp(current->entry->key, key) == 0)
         {
             if (prev == NULL)
             {
-                list->head = node->next;
+                list->head = current->next;
             }
             else
             {
-                prev->next = node->next;
+                prev->next = current->next;
             }
-            entry_destroy(node->entry);
-            free(node);
+            free_entry(current->entry);
+            free(current);
             list->size--;
-            return 0;
+
+            return 0; 
         }
-        prev = node;
-        node = node->next;
+        prev = current;
+        current = current->next;
     }
     return 1;
 }
@@ -130,15 +154,19 @@ struct entry_t *list_get(struct list_t *list, char *key)
     {
         return NULL;
     }
-    struct node_t *node = list->head;
-    while (node != NULL)
+
+    struct node_t *current = list->head;
+
+    while (current != NULL)
     {
-        if (strcmp(node->entry->key, key) == 0)
+        if (strcmp(current->entry->key, key) == 0)
         {
-            return node->entry;
+            return current->entry;
         }
-        node = node->next;
+
+        current = current->next;
     }
+
     return NULL;
 }
 
@@ -148,6 +176,7 @@ int list_size(struct list_t *list)
     {
         return -1;
     }
+
     return list->size;
 }
 
@@ -157,19 +186,63 @@ char **list_get_keys(struct list_t *list)
     {
         return NULL;
     }
-    char **keys = (char **)malloc((list->size + 1) * sizeof(char *));
-    if (keys == NULL)
-    {
-        return NULL;
-    }
-    struct node_t *node = list->head;
+
+    char **keys_array = NULL;
+    int num_keys = list->size;
     int i = 0;
-    while (node != NULL)
+
+    if (num_keys <= 0)
     {
-        keys[i] = strdup(node->entry->key);
-        node = node->next;
+        keys_array = (char **)malloc(sizeof(char *));
+        if (keys_array == NULL)
+        {
+            return NULL; 
+        }
+        keys_array[0] = NULL;
+        return keys_array;
+    }
+    
+    keys_array = (char **)malloc((num_keys + 1) * sizeof(char *));
+    if (keys_array == NULL)
+    {
+        return NULL; 
+    }
+
+    struct node_t *current = list->head;
+
+    while (current != NULL)
+    {
+        keys_array[i] = strdup(current->entry->key);
+        if (keys_array[i] == NULL)
+        {
+            for (int j = 0; j < i; j++)
+            {
+                free(keys_array[j]);
+            }
+            free(keys_array);
+            return NULL;
+        }
+
+        current = current->next;
         i++;
     }
-    keys[i] = NULL;
-    return keys;
+    keys_array[num_keys] = NULL;
+
+    return keys_array;
+}
+
+int list_free_keys(char **keys)
+{
+    if (keys == NULL)
+    {
+        return -1;
+    }
+
+    for (int i = 0; keys[i] != NULL; i++)
+    {
+        free(keys[i]);
+    }
+    free(keys);
+
+    return 0; 
 }
