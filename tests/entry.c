@@ -46,8 +46,8 @@ int entry_replace(struct entry_t *entry, char *new_key, struct data_t *new_value
     }
     free(entry->key);
     data_destroy(entry->value);
-    entry->key = strdup(new_key);
-    entry->value = data_dup(new_value);
+    entry->key = new_key;
+    entry->value = new_value;
     return 0;
 }
 
