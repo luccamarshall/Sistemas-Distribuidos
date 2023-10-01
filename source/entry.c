@@ -12,13 +12,13 @@ struct entry_t *entry_create(char *key, struct data_t *data){
     if(entry == NULL){
         return NULL;
     }
-    entry->key = strdup(key);
-    entry->value = data_dup(data);
+    entry->key = key;
+    entry->value = data;
     return entry;
 }
 
 int entry_destroy(struct entry_t *entry){
-    if(entry == NULL){
+    if(entry == NULL || entry->key == NULL || entry->value == NULL){
         return -1;
     }
     free(entry->key);
@@ -46,8 +46,8 @@ int entry_replace(struct entry_t *entry, char *new_key, struct data_t *new_value
     }
     free(entry->key);
     data_destroy(entry->value);
-    entry->key = strdup(new_key);
-    entry->value = data_dup(new_value);
+    entry->key = new_key;
+    entry->value = new_value;
     return 0;
 }
 
