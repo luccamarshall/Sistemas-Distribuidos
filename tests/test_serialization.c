@@ -51,10 +51,6 @@ int testSerialize(){
 	if ((size = keyArray_to_buffer(keys, &keys_buf)) == -1)
 		pee("  keyArray_to_buffer retornou -1 - O teste não pode prosseguir");
 
-	printf("size: %d\n", size);
-	for(int i = 0; keys[i] != NULL; i++){
-		printf("key: %s\n", keys[i]);
-	}
 	/*
 	| int   | string | string | string |
         | nkeys | key1   | key2   | key3   |
@@ -64,8 +60,6 @@ int testSerialize(){
 	result = result && (size == (sizeof(int) + strlen(key1)+1 + strlen(key2)+1 + strlen(key3)+1));
 
 	int val = ntohl(*((int*)keys_buf));
-    printf("val: %d\n", val);
-	printf("key_buf: %s\n", keys_buf);
 
 	assert(ntohl(*((int*)keys_buf)) == 3);
     	result = result && (ntohl(*((int*)keys_buf)) == 3);
