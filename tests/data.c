@@ -24,7 +24,7 @@ int data_destroy(struct data_t *data){
 }
 
 struct data_t *data_dup(struct data_t *data){
-    if(data == NULL || data->datasize <= 0) {
+    if(data == NULL || data->data == NULL || data->datasize <= 0) {
         return NULL;
     }
     struct data_t *data_t = (struct data_t*) malloc(sizeof(struct data_t));
