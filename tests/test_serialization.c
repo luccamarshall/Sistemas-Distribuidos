@@ -59,8 +59,6 @@ int testSerialize(){
 	assert(size == (sizeof(int) + strlen(key1)+1 + strlen(key2)+1 + strlen(key3)+1));
 	result = result && (size == (sizeof(int) + strlen(key1)+1 + strlen(key2)+1 + strlen(key3)+1));
 
-	int val = ntohl(*((int*)keys_buf));
-
 	assert(ntohl(*((int*)keys_buf)) == 3);
     	result = result && (ntohl(*((int*)keys_buf)) == 3);
 

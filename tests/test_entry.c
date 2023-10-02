@@ -40,6 +40,7 @@ int testCreate() {
 	data_destroy(entry->value);
 	free (entry);
 
+	printf("%s\n",result?"passou":"não passou");
 	return result;
 }
 
