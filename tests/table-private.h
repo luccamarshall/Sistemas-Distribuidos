@@ -7,7 +7,7 @@ struct table_t
 {
     int size;
     int num_entries;
-    struct entry_t **entries;
+    struct list_t **lists;
 };
 
 /* 

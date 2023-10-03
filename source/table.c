@@ -118,6 +118,7 @@ int table_size(struct table_t *table)
     {
         return -1;
     }
+    
     return table->num_entries;
 }
 
