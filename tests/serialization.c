@@ -13,16 +13,17 @@ int keyArray_to_buffer(char **keys, char **keys_buf)
     }
 
     int nkeys = 0;
-    int size = 0;
+    int keys_buf_size = 0;
 
     // Determine o número de chaves (nkeys) e o tamanho total do buffer
-    for (nkeys = 0; keys[nkeys] != NULL; nkeys++)
+    for (int i = 0; keys[i] != NULL; i++)
     {
-        size += strlen(keys[nkeys]) + 1; // +1 para o caractere nulo
+        nkeys++;
+        keys_buf_size += strlen(keys[i]) + 1; // +1 para o caractere nulo
     }
 
     // Aloque memória para o buffer
-    *keys_buf = (char *)malloc((size + sizeof(int)));
+    *keys_buf = (char *) malloc(sizeof(int) + keys_buf_size);
     if (*keys_buf == NULL)
     {
         return -1; // Erro de alocação de memória
@@ -36,16 +37,15 @@ int keyArray_to_buffer(char **keys, char **keys_buf)
     for (int i = 0; i < nkeys; i++)
     {
         // Determine o comprimento da chave
-        int key_length = strlen(keys[i]) + 1; // +1 para o caractere nuloS
+        int key_length = strlen(keys[i]) + 1; // +1 para o caractere nulo
 
         // Copie a chave para o buffer
-        memcpy(*keys_buf, keys[i], key_length);
+        strcpy(*keys_buf, keys[i]);
         *keys_buf += key_length; // Avance o ponteiro do buffer
     }
+    keys_buf -= keys_buf_size + sizeof(int); // Volte o ponteiro do buffer
 
-    *keys_buf -= size + sizeof(int); // Volte o ponteiro do buffer para o início
-
-    return size + sizeof(int); // Tamanho do buffer
+    return sizeof(int) + keys_buf_size;
 }
 
 char **buffer_to_keyArray(char *keys_buf)
