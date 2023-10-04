@@ -58,7 +58,7 @@ int list_add(struct list_t *list, struct entry_t *entry){
         {
             struct entry_t *old_entry = current->entry;
             current->entry = entry;
-            free(old_entry);
+            entry_destroy(old_entry);
             return 1;            
         }
         else if (compare_result > 0)
