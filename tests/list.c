@@ -35,7 +35,6 @@ int list_destroy(struct list_t *list)
     {
         struct node_t *next = current->next;
         entry_destroy(current->entry);
-        free(current);
         current = next;
     }
     free(list);
@@ -57,7 +56,6 @@ int list_add(struct list_t *list, struct entry_t *entry){
 
         if (compare_result == 0)
         {
-
             struct entry_t *old_entry = current->entry;
             current->entry = entry;
             free(old_entry);
@@ -134,7 +132,7 @@ int list_remove(struct list_t *list, char *key)
             {
                 prev->next = current->next;
             }
-            free(current->entry);
+            entry_destroy(current->entry);
             free(current);
             list->size--;
 

@@ -41,10 +41,8 @@ int table_destroy(struct table_t *table)
 
     for (int i = 0; i < table->size; i++)
     {
-        
         list_destroy(table->lists[i]);
     }
-    free(table->lists);
     free(table);
     return 0;
 }

@@ -43,9 +43,10 @@ int testPutInexistente() {
 		key[i] = (char*)malloc(16*sizeof(char));
 		sprintf(key[i],"a/key/b-%d",i);
 		data[i] = data_create(strlen(key[i])+1, strdup(key[i]));
+
 		table_put(table, key[i], data[i]);
 	}
-	
+
 	assert(table_size(table) == 1024);
 	result = (table_size(table) == 1024);
 
