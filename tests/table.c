@@ -38,6 +38,7 @@ int table_destroy(struct table_t *table)
     {
         return -1;
     }
+
     for (int i = 0; i < table->size; i++)
     {
         if (table->lists[i] != NULL)
@@ -45,10 +46,10 @@ int table_destroy(struct table_t *table)
             for(int j = 0; j < table->lists[i]->size; j++) {
                 entry_destroy(table->lists[i]->head->entry);
                 struct node_t *next = table->lists[i]->head->next;
-                free(table->lists[i]->head);
                 table->lists[i]->head = next;
             }
         }
+        list_destroy(table->lists[i]);
     }
     free(table->lists);
     free(table);
@@ -82,6 +83,7 @@ struct data_t *table_get(struct table_t *table, char *key)
     if (table == NULL || key == NULL) {
         return NULL;
     }
+
     int index = hash_code(key, table->size);
     if (table->lists[index] == NULL) {
         return NULL;
