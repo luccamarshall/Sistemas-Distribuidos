@@ -104,7 +104,6 @@ int testPutExistente() {
 
 	for(i=0; i<1024; i++) {
 		d = table_get(table, key[i]);
-		
 		if(i==256) {
 			result = result && (d->datasize == strlen("256")+1 && 
         	                   memcmp(d->data, "256", d->datasize) == 0);

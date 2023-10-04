@@ -49,7 +49,6 @@ int table_destroy(struct table_t *table)
 
 int table_put(struct table_t *table, char *key, struct data_t *value)
 {
-
     if (table == NULL || key == NULL || value == NULL) {
         return -1;
     }
@@ -59,13 +58,9 @@ int table_put(struct table_t *table, char *key, struct data_t *value)
     if (table->lists[hash] == NULL) {
         table->lists[hash] = list_create();
     }
-
     struct entry_t *entry = entry_create(key, value);
 
-    if (list_add(table->lists[hash], entry) == -1) {
-        return -1;
-    }
-    return 0;
+    return list_add(table->lists[hash], entry);
    
 }
 
