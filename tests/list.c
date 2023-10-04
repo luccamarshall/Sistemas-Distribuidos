@@ -34,10 +34,7 @@ int list_destroy(struct list_t *list)
     while (current != NULL)
     {
         struct node_t *next = current->next;
-        if (current->entry != NULL)
-        {
-            free(current->entry);
-        }
+        entry_destroy(current->entry);
         free(current);
         current = next;
     }

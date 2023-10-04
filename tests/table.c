@@ -41,14 +41,7 @@ int table_destroy(struct table_t *table)
 
     for (int i = 0; i < table->size; i++)
     {
-        if (table->lists[i] != NULL)
-        {
-            for(int j = 0; j < table->lists[i]->size; j++) {
-                entry_destroy(table->lists[i]->head->entry);
-                struct node_t *next = table->lists[i]->head->next;
-                table->lists[i]->head = next;
-            }
-        }
+        
         list_destroy(table->lists[i]);
     }
     free(table->lists);
