@@ -242,7 +242,6 @@ int testGetKeys() {
 		}
 		result = (result && achou);
 	}
-	printf("i: %d\n",i);
 	result = result && (table_size(table) == i);
 	table_free_keys(keys);
 	table_destroy(table);

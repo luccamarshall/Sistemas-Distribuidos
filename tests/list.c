@@ -81,7 +81,7 @@ int list_add(struct list_t *list, struct entry_t *entry){
                 prev->next = new_node;
             }
             list->size++;
-            return 0; 
+            return 0;
         }
 
         prev = current;

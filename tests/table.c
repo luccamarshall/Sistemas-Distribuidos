@@ -61,7 +61,7 @@ int table_put(struct table_t *table, char *key, struct data_t *value)
     struct data_t *datacopy = data_dup(value);
     char *keycopy = strdup(key);
     struct entry_t *entry = entry_create(keycopy, datacopy);
-
+    table->num_entries++;
     return list_add(table->lists[hash], entry);
    
 }
@@ -113,7 +113,7 @@ int table_size(struct table_t *table)
 
     for(int i = 0; i < table->size; i++) {
         if (table->lists[i] != NULL) {
-            num_entries += table->lists[i]->size;
+            num_entries += list_size(table->lists[i]);
         }
     }
     return num_entries;
