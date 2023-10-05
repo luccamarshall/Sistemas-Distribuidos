@@ -21,6 +21,8 @@ int entry_destroy(struct entry_t *entry){
     if(entry == NULL || entry->key == NULL || entry->value == NULL){
         return -1;
     }
+    free(entry->key);
+    data_destroy(entry->value);
     free(entry);
     return 0;
 }

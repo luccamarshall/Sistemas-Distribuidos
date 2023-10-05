@@ -37,6 +37,7 @@ int list_destroy(struct list_t *list)
         entry_destroy(current->entry);
         current = next;
     }
+    free(list->head);
     free(list);
 
     return 0; // Sucesso

@@ -58,7 +58,9 @@ int table_put(struct table_t *table, char *key, struct data_t *value)
     if (table->lists[hash] == NULL) {
         table->lists[hash] = list_create();
     }
-    struct entry_t *entry = entry_create(key, value);
+    struct data_t *datacopy = data_dup(value);
+    char *keycopy = strdup(key);
+    struct entry_t *entry = entry_create(keycopy, datacopy);
 
     return list_add(table->lists[hash], entry);
    
