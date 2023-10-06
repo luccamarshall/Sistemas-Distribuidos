@@ -7,6 +7,7 @@
 struct data_t *data_create(int size, void *data){
     struct data_t *data_t = (struct data_t*) malloc(sizeof(struct data_t));
     if(data_t == NULL || size <= 0 || data == NULL) {
+        free(data_t);
         return NULL;
     }
     data_t->datasize = size;
@@ -29,6 +30,7 @@ struct data_t *data_dup(struct data_t *data){
     }
     struct data_t *newdata = (struct data_t*) malloc(sizeof(struct data_t));
     if(newdata == NULL){
+        free(newdata);
         return NULL;
     }
     newdata->datasize = data->datasize;

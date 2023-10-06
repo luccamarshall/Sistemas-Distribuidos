@@ -15,6 +15,7 @@ struct list_t *list_create()
     struct list_t *new_list = (struct list_t *)malloc(sizeof(struct list_t));
     if (new_list == NULL)
     {
+        free(new_list);
         return NULL;
     }
     new_list->size = 0;
@@ -67,6 +68,7 @@ int list_add(struct list_t *list, struct entry_t *entry){
             struct node_t *new_node = (struct node_t *)malloc(sizeof(struct node_t));
             if (new_node == NULL)
             {
+                free(new_node);
                 return -1; 
             }
             new_node->entry = entry;
@@ -91,6 +93,7 @@ int list_add(struct list_t *list, struct entry_t *entry){
     struct node_t *new_node = (struct node_t *)malloc(sizeof(struct node_t));
     if (new_node == NULL)
     {
+        free(new_node);
         return -1; 
     }
 
@@ -193,6 +196,7 @@ char **list_get_keys(struct list_t *list)
         keys_array = (char **)malloc(sizeof(char *));
         if (keys_array == NULL)
         {
+            free(keys_array);
             return NULL; 
         }
         keys_array[0] = NULL;
@@ -202,6 +206,7 @@ char **list_get_keys(struct list_t *list)
     keys_array = (char **)malloc((num_keys + 1) * sizeof(char *));
     if (keys_array == NULL)
     {
+        free(keys_array);
         return NULL; 
     }
 
