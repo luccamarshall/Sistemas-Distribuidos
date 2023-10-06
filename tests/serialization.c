@@ -31,7 +31,8 @@ int keyArray_to_buffer(char **keys, char **keys_buf)
 
     // Copie o número de chaves (nkeys) para o início do buffer
     memcpy(*keys_buf, &nkeys, sizeof(int));
-    *keys_buf += sizeof(int); // Avance o ponteiro do buffer
+    char *current_position = *keys_buf + sizeof(int);
+    char *original_position = *keys_buf;
 
     // Copie cada chave para o buffer
     for (int i = 0; i < nkeys; i++)
@@ -40,11 +41,11 @@ int keyArray_to_buffer(char **keys, char **keys_buf)
         int key_length = strlen(keys[i]) + 1; // +1 para o caractere nulo
 
         // Copie a chave para o buffer
-        strcpy(*keys_buf, keys[i]);
-        *keys_buf += key_length; // Avance o ponteiro do buffer
+        strcpy(current_position, keys[i]);
+        current_position += key_length; // Avance o ponteiro do buffer
     }
-    keys_buf -= keys_buf_size + sizeof(int); // Volte o ponteiro do buffer
-
+    *keys_buf = original_position;
+    
     return sizeof(int) + keys_buf_size;
 }
 
