@@ -32,13 +32,13 @@ int list_destroy(struct list_t *list)
     }
     struct node_t *current = list->head;
 
-    while (current != NULL)
+    while (list->head != NULL)
     {
-        struct node_t *next = current->next;
-        entry_destroy(current->entry);
-        current = next;
+        struct node_t *next = list->head->next;
+        entry_destroy(list->head->entry);
+        free(list->head);
+        list->head = next;
     }
-    free(list->head);
     free(list);
 
     return 0; // Sucesso
