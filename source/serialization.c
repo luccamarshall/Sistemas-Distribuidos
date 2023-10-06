@@ -1,53 +1,52 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+
 #include "list-private.h" // Certifique-se de incluir o arquivo de cabeçalho apropriado
 
 int keyArray_to_buffer(char **keys, char **keys_buf)
 {
     if (keys == NULL || keys_buf == NULL)
     {
-        // Parâmetros inválidos
+        // Parâmetro inválido
         return -1;
     }
 
-    int nkeys = 0;       // Número de chaves
-    int buffer_size = 0; // Tamanho total do buffer
-    char *buffer = NULL; // Buffer para armazenar os dados serializados
-    char **current_key = keys;
+    int nkeys = 0;
+    int keys_buf_size = 0;
 
-    // Calcule o número de chaves e o tamanho total do buffer
-    while (*current_key != NULL)
+    // Determine o número de chaves (nkeys) e o tamanho total do buffer
+    for (int i = 0; keys[i] != NULL; i++)
     {
         nkeys++;
-        buffer_size += strlen(*current_key) + 1; // +1 para o caractere nulo
-        current_key++;
+        keys_buf_size += strlen(keys[i]) + 1; // +1 para o caractere nulo
     }
 
     // Aloque memória para o buffer
-    buffer = (char *)malloc(sizeof(int) + buffer_size);
-    if (buffer == NULL)
+    *keys_buf = (char *) malloc(sizeof(int) + keys_buf_size);
+    if (*keys_buf == NULL)
     {
         return -1; // Erro de alocação de memória
     }
 
     // Copie o número de chaves (nkeys) para o início do buffer
-    memcpy(buffer, &nkeys, sizeof(int));
-    buffer += sizeof(int); // Avance o ponteiro do buffer
+    memcpy(*keys_buf, &nkeys, sizeof(int));
+    char *current_position = *keys_buf + sizeof(int);
+    char *original_position = *keys_buf;
 
     // Copie cada chave para o buffer
-    current_key = keys;
-    while (*current_key != NULL)
+    for (int i = 0; i < nkeys; i++)
     {
-        int key_length = strlen(*current_key) + 1; // +1 para o caractere nulo
-        memcpy(buffer, *current_key, key_length);
-        buffer += key_length; // Avance o ponteiro do buffer
-        current_key++;
+        // Determine o comprimento da chave
+        int key_length = strlen(keys[i]) + 1; // +1 para o caractere nulo
+
+        // Copie a chave para o buffer
+        strcpy(current_position, keys[i]);
+        current_position += key_length; // Avance o ponteiro do buffer
     }
-
-    *keys_buf = buffer - buffer_size; // Restaure o ponteiro original do buffer
-
-    return sizeof(int) + buffer_size; // Tamanho total do buffer
+    *keys_buf = original_position;
+    
+    return sizeof(int) + keys_buf_size;
 }
 
 char **buffer_to_keyArray(char *keys_buf)

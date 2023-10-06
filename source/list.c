@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+
 #include "list.h"
 #include "list-private.h"
 
@@ -33,13 +34,10 @@ int list_destroy(struct list_t *list)
     while (current != NULL)
     {
         struct node_t *next = current->next;
-        if (current->entry != NULL)
-        {
-            free(current->entry);
-        }
-        free(current);
+        entry_destroy(current->entry);
         current = next;
     }
+    free(list->head);
     free(list);
 
     return 0; // Sucesso
@@ -59,10 +57,9 @@ int list_add(struct list_t *list, struct entry_t *entry){
 
         if (compare_result == 0)
         {
-
             struct entry_t *old_entry = current->entry;
             current->entry = entry;
-            free(old_entry);
+            entry_destroy(old_entry);
             return 1;            
         }
         else if (compare_result > 0)
@@ -84,7 +81,7 @@ int list_add(struct list_t *list, struct entry_t *entry){
                 prev->next = new_node;
             }
             list->size++;
-            return 0; 
+            return 0;
         }
 
         prev = current;
@@ -136,7 +133,7 @@ int list_remove(struct list_t *list, char *key)
             {
                 prev->next = current->next;
             }
-            free(current->entry);
+            entry_destroy(current->entry);
             free(current);
             list->size--;
 
