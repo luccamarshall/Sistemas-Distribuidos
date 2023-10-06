@@ -12,6 +12,7 @@ struct table_t *table_create(int n)
     struct table_t *table = (struct table_t *)malloc(sizeof(struct table_t));
     if (table == NULL)
     {
+        free(table);
         return NULL;
     }
 
@@ -20,7 +21,7 @@ struct table_t *table_create(int n)
     table->lists = (struct list_t **)malloc(sizeof(struct entry_t *) * n);
     if (table->lists == NULL)
     {
-        free(table);
+        free(table->lists);
         return NULL;
     }
 
@@ -126,6 +127,7 @@ char **table_get_keys(struct table_t *table) {
     }
     char **keys = (char **)malloc(sizeof(char *) * table->num_entries);
     if (keys == NULL) {
+        free(keys);
         return NULL;
     }
     int i = 0;

@@ -26,6 +26,7 @@ int keyArray_to_buffer(char **keys, char **keys_buf)
     *keys_buf = (char *) malloc(sizeof(int) + keys_buf_size);
     if (*keys_buf == NULL)
     {
+        free(*keys_buf);
         return -1; // Erro de alocação de memória
     }
 
@@ -68,6 +69,7 @@ char **buffer_to_keyArray(char *keys_buf)
     keys = (char **)malloc((nkeys + 1) * sizeof(char *));
     if (keys == NULL)
     {
+        free(keys);
         return NULL; // Erro de alocação de memória
     }
 
