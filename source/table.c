@@ -12,7 +12,6 @@ struct table_t *table_create(int n)
     struct table_t *table = (struct table_t *)malloc(sizeof(struct table_t));
     if (table == NULL)
     {
-        free(table);
         return NULL;
     }
 
@@ -44,6 +43,7 @@ int table_destroy(struct table_t *table)
     {
         list_destroy(table->lists[i]);
     }
+    free(table->lists);
     free(table);
     return 0;
 }
@@ -127,7 +127,6 @@ char **table_get_keys(struct table_t *table) {
     }
     char **keys = (char **)malloc(sizeof(char *) * table->num_entries);
     if (keys == NULL) {
-        free(keys);
         return NULL;
     }
     int i = 0;
