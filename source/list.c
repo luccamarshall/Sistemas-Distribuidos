@@ -30,18 +30,20 @@ int list_destroy(struct list_t *list)
     {
         return -1;
     }
+    
     struct node_t *current = list->head;
-
-    while (list->head != NULL)
+    
+    while (current != NULL)
     {
-        struct node_t *next = list->head->next;
-        entry_destroy(list->head->entry);
-        free(list->head);
-        list->head = next;
+        struct node_t *next = current->next;
+        entry_destroy(current->entry);
+        free(current);
+        current = next;
     }
+    
     free(list);
 
-    return 0; // Sucesso
+    return 0;
 }
 
 int list_add(struct list_t *list, struct entry_t *entry){
