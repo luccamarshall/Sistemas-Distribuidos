@@ -29,7 +29,7 @@ TEST_EXECS = $(addprefix $(BIN_DIR)/, $(TEST_SRC_FILES:.c=))
 DEP_FILES = $(addprefix $(DEP_DIR)/, $(SRC_FILES:.c=.d) $(TEST_SRC_FILES:.c=.d))
 
 # Default target: Build all test programs
-all: $(TEST_EXECS)
+all: $(BIN_DIR) $(TEST_EXECS)
 
 # Build test programs
 $(BIN_DIR)/%: $(OBJ_DIR)/%.o $(OBJ_FILES)
