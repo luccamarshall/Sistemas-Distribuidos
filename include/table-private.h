@@ -3,16 +3,13 @@
 
 #include "list.h"
 
-struct table_t
-{
-    int size;
-    int num_entries;
-    struct list_t **lists;
+struct table_t {
+	struct list_t **lists;
+	int size;
 };
 
-/* 
- * Função que calcula o índice da lista a partir da chave
+/* Função que calcula o índice da lista a partir da chave
  */
-int hash_code(char *key, int size);
+int hash_code(char *key, int n);
 
 #endif
