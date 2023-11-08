@@ -1,3 +1,6 @@
+#ifndef _TABLE_SKEL_H
+#define _TABLE_SKEL_H
+
 #include "table.h"
 #include "sdmessage.pb-c.h"
 
@@ -20,3 +23,5 @@ int table_skel_destroy(struct table_t *table);
  * Retorna 0 (OK) ou -1 em caso de erro.
 */
 int invoke(MessageT *msg, struct table_t *table);
+
+#endif

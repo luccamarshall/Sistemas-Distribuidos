@@ -1,3 +1,6 @@
+#ifndef _NETWORK_CLIENT_H
+#define _NETWORK_CLIENT_H
+
 #include "client_stub.h"
 #include "sdmessage.pb-c.h"
 
@@ -9,7 +12,7 @@
  *   na estrutura rtable;
  * - Retornar 0 (OK) ou -1 (erro).
  */
-int network_connect(struct rtable_t *rtable);
+int network_connect(struct rtable_t *rtable, int port);
 
 /* Esta função deve:
  * - Obter o descritor da ligação (socket) da estrutura rtable_t;
@@ -26,3 +29,5 @@ MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg);
  * Retorna 0 (OK) ou -1 (erro).
  */
 int network_close(struct rtable_t *rtable);
+
+#endif

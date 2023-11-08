@@ -2,12 +2,10 @@
 #define _TABLE_PRIVATE_H
 
 #include "list.h"
-#include "list-private.h"
 
 struct table_t {
 	struct list_t **lists;
 	int size;
-	int num_entries;
 };
 
 /* Função que calcula o índice da lista a partir da chave

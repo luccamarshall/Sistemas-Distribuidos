@@ -1,4 +1,3 @@
-# Directory structure
 BIN_DIR = binary
 INC_DIR = include
 LIB_DIR = lib
@@ -6,52 +5,33 @@ OBJ_DIR = object
 SRC_DIR = source
 DEP_DIR = dependencies
 
-# Compiler and flags
 CC = gcc
-CFLAGS = -Wall -MMD -MP -MF $(DEP_DIR)/$*.d -I $(INC_DIR)
+CFLAGS = -g -Wall -MMD -MP -MF $(DEP_DIR)/$*.d -I $(INC_DIR)
+LDFLAGS = -lprotobuf-c
 
-# Source files (add more if needed)
-SRC_FILES = data.c entry.c list.c list-private.c serialization.c table.c table-private.c
+KEEP_OBJECTS = $(OBJ_DIR)/list.o $(OBJ_DIR)/table.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/data.o
 
-# Test source files (add more if needed)
-TEST_SRC_FILES = test_data.c test_entry.c test_list.c test_serialization.c test_table.c
+EXECS = $(BIN_DIR)/table-client $(BIN_DIR)/table-server
 
-# Generate object file names based on source files
-OBJ_FILES = $(addprefix $(OBJ_DIR)/, $(SRC_FILES:.c=.o))
+all: libtable $(EXECS)
 
-# Generate object file names based on test source files
-TEST_OBJ_FILES = $(addprefix $(OBJ_DIR)/, $(TEST_SRC_FILES:.c=.o))
+libtable: $(LIB_DIR)/libtable.a
 
-# Generate test program names
-TEST_EXECS = $(addprefix $(BIN_DIR)/, $(TEST_SRC_FILES:.c=))
+table-client: $(BIN_DIR)/table-client
 
-# Dependencies
-DEP_FILES = $(addprefix $(DEP_DIR)/, $(SRC_FILES:.c=.d) $(TEST_SRC_FILES:.c=.d))
+table-server: $(BIN_DIR)/table-server
 
-# Default target: Build all test programs
-all: $(BIN_DIR) $(TEST_EXECS)
+$(LIB_DIR)/libtable.a: $(OBJ_DIR)/data.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/list.o $(OBJ_DIR)/table.o
+    ar -rcs $@ $^
 
-# Build test programs
-$(BIN_DIR)/%: $(OBJ_DIR)/%.o $(OBJ_FILES)
-	$(CC) $^ -o $@
+$(BIN_DIR)/table-client: $(OBJ_DIR)/table_client.o $(OBJ_DIR)/sdmessage.pb-c.o $(OBJ_DIR)/network_client.o $(OBJ_DIR)/client_stub.o $(OBJ_DIR)/message.o $(LIB_DIR)/libtable.a
+    $(CC) $^ -o $@ $(LDFLAGS)
 
-# Build object files from source files
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR) $(DEP_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+$(BIN_DIR)/table-server: $(OBJ_DIR)/table_server.o $(OBJ_DIR)/table_skel.o $(OBJ_DIR)/network_server.o $(OBJ_DIR)/message.o $(OBJ_DIR)/sdmessage.pb-c.o $(LIB_DIR)/libtable.a
+    $(CC) $^ -o $@ $(LDFLAGS)
 
-# Build object files from test source files
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR) $(DEP_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+    $(CC) $(CFLAGS) -c $< -o $@
 
-# Include dependency files
--include $(wildcard $(DEP_FILES))
-
-# Create directories
-$(OBJ_DIR) $(DEP_DIR) $(BIN_DIR):
-	mkdir -p $@
-
-# Clean target: Remove generated files
 clean:
-	rm -rf $(DEP_DIR)/* $(OBJ_DIR)/* $(BIN_DIR)/*
-
-.PHONY: all clean
+    rm -rf $(DEP_DIR)/* $(filter-out $(KEEP_OBJECTS), $(wildcard $(OBJ_DIR)/*.o)) $(BIN_DIR)/* $(LIB_DIR)/*

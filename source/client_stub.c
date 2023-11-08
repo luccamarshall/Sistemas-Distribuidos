@@ -1,4 +1,7 @@
 #include "client_stub.h"
+#include "client_stub-private.h"
+#include "stdio.h" 
+#include <stdlib.h>
 
 struct rtable_t *rtable_connect(char *address_port) {
   
