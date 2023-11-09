@@ -1,3 +1,10 @@
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include "client_stub.h"
 #include "sdmessage.pb-c.h"
 #include "table.h"
@@ -7,13 +14,7 @@
 #include "message-private.h"
 #include "entry.h"
 #include "data.h"
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/socket.h>
+
 
 
 /* Esta função deve:
@@ -71,20 +72,66 @@ MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg){
         return NULL;
     }
 
+    int sockfd = rtable->sockfd;
+
+    // Serialize message
+    size_t msg_size = message_t__get_packed_size(msg);
+    void *msg_buf = malloc(msg_size);
+    if (msg_buf == NULL) {
+        perror("network_send_receive: malloc failed");
+        return NULL;
+    }
+    message_t__pack(msg, msg_buf);
+
     // Send message
-    if (message_send(rtable->sockfd, msg) < 0) {
-        perror("network_send_receive: message_send failed");
+    uint16_t msg_size_n = htons(msg_size);
+    if (write_all(sockfd, &msg_size_n, sizeof(uint16_t)) == -1) {
+        // Tratar erro de envio
+        free(msg_buf);
         return NULL;
     }
 
-    // Receive message
-    MessageT *msg_resposta = message_receive(rtable->sockfd);
-    if (msg_resposta == NULL) {
-        perror("network_send_receive: message_receive failed");
+    if (write_all(sockfd, msg_buf, msg_size) == -1) {
+        // Tratar erro de envio
+        free(msg_buf);
         return NULL;
     }
 
-    return msg_resposta;
+    // Receive message size
+    uint16_t response_size;
+    if (read_all(sockfd, &response_size, sizeof(uint16_t)) == -1) {
+        // Tratar erro de recebimento
+        return NULL;
+    }
+    response_size = ntohs(response_size);
+
+    // Aloca memória para o buffer de resposta
+    uint8_t *response_buffer = malloc(response_size);
+    if (response_buffer == NULL) {
+        // Tratar erro de alocação de memória
+        return NULL;
+    }
+
+    // Recebe o buffer de resposta
+    if (read_all(sockfd, response_buffer, response_size) == -1) {
+        // Tratar erro de recebimento
+        free(response_buffer);
+        return NULL;
+    }
+
+    // Deserialize response
+    MessageT *response = message_t__unpack(NULL, msg_size, response_buf);
+    if (response == NULL) {
+        perror("network_send_receive: message_t__unpack failed");
+        free(msg_buf);
+        free(response_buf);
+        return NULL;
+    }
+
+    free(msg_buf);
+    free(response_buf);
+
+    return response;
 }
 /* Fecha a ligação estabelecida por network_connect().
  * Retorna 0 (OK) ou -1 (erro).

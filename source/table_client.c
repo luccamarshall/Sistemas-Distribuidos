@@ -5,6 +5,7 @@
 #include "client_stub.h"
 #include "data.h"
 #include "entry.h"
+#include "client"
 
 #define MAX_COMMAND_LENGTH 1024
 

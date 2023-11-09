@@ -1,7 +1,8 @@
-#include "client_stub.h"
-#include "client_stub-private.h"
 #include "stdio.h" 
 #include <stdlib.h>
+#include "client_stub.h"
+#include "client_stub-private.h"
+#include "message-private.h"
 
 struct rtable_t *rtable_connect(char *address_port) {
   
@@ -54,6 +55,11 @@ int rtable_disconnect(struct rtable_t *rtable) {
         return -1;
     }
 
+    if(network_close(rtable->sockfd) < 0) {
+        perror("rtable_disconnect: network_close failed");
+        return -1;
+    }
+
     free(rtable->server_address);
     if (close(rtable->sockfd) < 0) {
         perror("rtable_disconnect: close socket failed");
@@ -69,27 +75,32 @@ int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
         return -1;
     }
 
-    // Send request type
-    int request_type = PUT;
-    if (write(rtable->sockfd, &request_type, sizeof(int)) < 0) {
-        perror("rtable_put: write request_type failed");
-        return -2;
-    }
+    // MessageT *request = create_put_request(entry);
+    MessageT *request = MESSAGE_T__INIT;
+    request->opcode = MESSAGE_T__OPCODE__OP_PUT;
+    request->c_type = MESSAGE_T__C_TYPE__CT_ENTRY;
+    request->key = entry->key;
 
-    // Send entry
-    if (entry_marshall(entry, rtable->sockfd) < 0) {
-        perror("rtable_put: entry_marshall failed");
-        return -3;
-    }
+    EntryT *entry_message = ENTRY_T__INIT;
+    entry_message->key = entry->key;
+    entry_message->value.data = (uint8_t *) entry->value->data;
+    entry_message->value.len = (size_t) entry->value->datasize;
 
-    // Receive result
-    int result;
-    if (read(rtable->sockfd, &result, sizeof(int)) < 0) {
-        perror("rtable_put: read result failed");
-        return -4;
-    }
+    request->content.entry = entry_message;
+    
+    // Send the message and receive the response
+    MessageT *response = network_send_receive(rtable->socket, request);
 
-    return result;
+    // Check if the response is valid
+    if (response == NULL || response->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
+        fprintf(stderr, "rtable_put: response not valid\n");
+        return -1;
+    }
+    free(request);
+    free(response);
+    free(entry_message);
+
+    return 0;
 }
 
 struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
@@ -99,20 +110,20 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
 
     // Send request type
     int request_type = GET;
-    if (write(rtable->sockfd, &request_type, sizeof(int)) < 0) {
+    if (write_all(rtable->sockfd, &request_type, sizeof(int)) < 0) {
         perror("rtable_get: write request_type failed");
         return NULL;
     }
 
     // Send key
-    if (write(rtable->sockfd, key, strlen(key) + 1) < 0) {
+    if (write_all(rtable->sockfd, key, strlen(key) + 1) < 0) {
         perror("rtable_get: write key failed");
         return NULL;
     }
 
     // Receive result
     int result;
-    if (read(rtable->sockfd, &result, sizeof(int)) < 0) {
+    if (read_all(rtable->sockfd, &result, sizeof(int)) < 0) {
         perror("rtable_get: read result failed");
         return NULL;
     }
@@ -138,21 +149,21 @@ int rtable_del(struct rtable_t *rtable, char *key) {
 
     // Send request type
     int request_type = DEL;
-    if (write(rtable->sockfd, &request_type, sizeof(int)) < 0) {
+    if (write_all(rtable->sockfd, &request_type, sizeof(int)) < 0) {
         perror("rtable_del: write request_type failed");
         return -2;
     }
 
     // Send key
     size_t key_length = strlen(key) + 1;
-    if (write(rtable->sockfd, key, key_length) < 0) {
+    if (write_all(rtable->sockfd, key, key_length) < 0) {
         perror("rtable_del: write key failed");
         return -3;
     }
 
     // Receive result
     int result;
-    if (read(rtable->sockfd, &result, sizeof(int)) < 0) {
+    if (read_all(rtable->sockfd, &result, sizeof(int)) < 0) {
         perror("rtable_del: read result failed");
         return -4;
     }
@@ -167,14 +178,14 @@ int rtable_size(struct rtable_t *rtable) {
 
     // Send request type
     int request_type = SIZE;
-    if (write(rtable->sockfd, &request_type, sizeof(int)) < 0) {
+    if (write_all(rtable->sockfd, &request_type, sizeof(int)) < 0) {
         perror("rtable_size: write request_type failed");
         return -2;
     }
 
     // Receive result
     int result;
-    if (read(rtable->sockfd, &result, sizeof(int)) < 0) {
+    if (read_all(rtable->sockfd, &result, sizeof(int)) < 0) {
         perror("rtable_size: read result failed");
         return -3;
     }
@@ -189,14 +200,14 @@ char **rtable_get_keys(struct rtable_t *rtable) {
 
     // Send request type
     int request_type = GETKEYS;
-    if (write(rtable->sockfd, &request_type, sizeof(int)) < 0) {
+    if (write_all(rtable->sockfd, &request_type, sizeof(int)) < 0) {
         perror("rtable_get_keys: write request_type failed");
         return NULL;
     }
 
     // Receive result
     int result;
-    if (read(rtable->sockfd, &result, sizeof(int)) < 0) {
+    if (read_all(rtable->sockfd, &result, sizeof(int)) < 0) {
         perror("rtable_get_keys: read result failed");
         return NULL;
     }
@@ -234,14 +245,14 @@ struct entry_t **rtable_get_table(struct rtable_t *rtable) {
 
     // Send request type
     int request_type = GETTABLE;
-    if (write(rtable->sockfd, &request_type, sizeof(int)) < 0) {
+    if (write_all(rtable->sockfd, &request_type, sizeof(int)) < 0) {
         perror("rtable_get_table: write request_type failed");
         return NULL;
     }
 
     // Receive result
     int result;
-    if (read(rtable->sockfd, &result, sizeof(int)) < 0) {
+    if (read_all(rtable->sockfd, &result, sizeof(int)) < 0) {
         perror("rtable_get_table: read result failed");
         return NULL;
     }

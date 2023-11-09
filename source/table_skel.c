@@ -52,7 +52,7 @@ int table_skel_destroy(struct table_t *table){
  * e utiliza a mesma estrutura MessageT para devolver o resultado.
  * Retorna 0 (OK) ou -1 em caso de erro.
 */
-int invoke(MessageT *msg, struct table_t *table){
+int invoke(MessageT *msg, struct table_t *table) {
     if (msg == NULL || table == NULL) {
         return -1;
     }
@@ -62,59 +62,69 @@ int invoke(MessageT *msg, struct table_t *table){
     struct entry_t *entry = NULL;
 
     switch (msg->opcode) {
-        case OC_PUT:
-            result = table_put(table, msg->content.entry->key, msg->content.entry->value);
+        case MESSAGE_T__OPCODE__OP_PUT:
+            int size_data = (int) msg->content.entry->value.len;
+            struct data_t data = data_create(size_data, msg->value);
+            result = table_put(table, msg->content.entry->key, data);
+            msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             break;
-        case OC_COND_PUT:
-            result = table_conditional_put(table, msg->content.entry->key, msg->content.entry->value);
-            break;
-        case OC_GET:
+        case MESSAGE_T__OPCODE__OP_GET:
             data = table_get(table, msg->content.key);
             if (data != NULL) {
                 result = 0;
             }
+            msg->c_type = MESSAGE_T__C_TYPE__CT_VALUE;
             break;
-        case OC_DEL:
-            result = table_del(table, msg->content.key);
+        case MESSAGE_T__OPCODE__OP_DEL:
+            result = table_remove(table, msg->content.key);
+            msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             break;
-        case OC_SIZE:
+        case MESSAGE_T__OPCODE__OP_SIZE:
             result = table_size(table);
+            msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
             break;
-        case OC_GET_KEYS:
+        case MESSAGE_T__OPCODE__OP_GETKEYS:
             result = table_get_keys(table, &entry);
+            msg->c_type = MESSAGE_T__C_TYPE__CT_KEYS;
+            break;
+        case MESSAGE_T__OPCODE__OP_GETTABLE:
+            result = table;
+            msg->c_type = MESSAGE_T__C_TYPE__CT_TABLE;
             break;
         default:
             break;
     }
 
     if (result == -1) {
+        msg->opcode = MESSAGE_T__OPCODE__OP_ERROR;
+        msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
         return -1;
     }
 
-    msg->opcode = result;
-    msg->c_type = CT_RESULT;
-
-    switch (msg->opcode) {
-        case OC_PUT:
-            msg->content.result = 0;
-            break;
-        case OC_COND_PUT:
-            msg->content.result = 0;
-            break;
-        case OC_GET:
-            msg->content.data = data;
-            break;
-        case OC_DEL:
-            msg->content.result = 0;
-            break;
-        case OC_SIZE:
-            msg->content.result = result;
-            break;
-        case OC_GET_KEYS:
-            msg->content.keys = entry;
-            break;
-        default:
-            break;
-    }
+    msg->opcode = msg->opcode+1;
 
     return 0;
+}
+
+// switch (msg->opcode) {
+//         case OC_PUT:
+//             msg->content.result = 0;
+//             break;
+//         case OC_COND_PUT:
+//             msg->content.result = 0;
+//             break;
+//         case OC_GET:
+//             msg->content.data = data;
+//             break;
+//         case OC_DEL:
+//             msg->content.result = 0;
+//             break;
+//         case OC_SIZE:
+//             msg->content.result = result;
+//             break;
+//         case OC_GET_KEYS:
+//             msg->content.keys = entry;
+//             break;
+//         default:
+//             break;
+// }
