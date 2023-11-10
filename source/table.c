@@ -94,14 +94,14 @@ int table_remove(struct table_t *table, char *key)
     int hash = hash_code(key, table->size);
 
     if (table->lists[hash] == NULL) {
-        return 1;
+        return -1;
     }
 
     if (list_remove(table->lists[hash], key) == 0) {
         table->num_entries--;
         return 0;
     }
-    return 1;
+    return -1;
 }
 
 int table_size(struct table_t *table)

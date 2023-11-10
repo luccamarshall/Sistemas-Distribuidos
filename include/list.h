@@ -3,6 +3,7 @@
 
 #include "data.h"
 #include "entry.h"
+#include "list-private.h"
 
 struct list_t; /* a definir pelo grupo em list-private.h */
 

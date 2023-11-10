@@ -7,6 +7,7 @@
 #include "message-private.h"
 #include "entry.h"
 #include "data.h"
+#include "table_skel-private.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -74,6 +75,8 @@ int invoke(MessageT *msg, struct table_t *table) {
                 result = 0;
             }
             msg->c_type = MESSAGE_T__C_TYPE__CT_VALUE;
+            msg->value.data = (uint8_t *) data;
+            msg->value.len = (size_t) data->datasize;
             break;
         case MESSAGE_T__OPCODE__OP_DEL:
             result = table_remove(table, msg->content.key);
@@ -82,20 +85,36 @@ int invoke(MessageT *msg, struct table_t *table) {
         case MESSAGE_T__OPCODE__OP_SIZE:
             result = table_size(table);
             msg->c_type = MESSAGE_T__C_TYPE__CT_RESULT;
+            msg->content.result = (int32_t) result;
             break;
         case MESSAGE_T__OPCODE__OP_GETKEYS:
-            result = table_get_keys(table, &entry);
+            result = table_get_keys(table);
             msg->c_type = MESSAGE_T__C_TYPE__CT_KEYS;
+            msg->keys = result;
             break;
         case MESSAGE_T__OPCODE__OP_GETTABLE:
             result = table;
             msg->c_type = MESSAGE_T__C_TYPE__CT_TABLE;
+            msg->n_entries = (size_t) table->num_entries;
+            int count = 0;
+            for (int i = 0; i < table->size; i++) {
+                for (int j = 0; j < table->lists[i]->size; j++) {
+                    entry_t entry = table_get_n_entry(table->lists[i], j);
+
+                    Entry_t entry_message = ENTRY_T__INIT;
+                    entry_message->key = entry->key;
+                    entry_message->value.data = (uint8_t *) entry->value->data;
+                    entry_message->value.len = (size_t) entry->value->datasize;
+                    msg->entries[count] = entry_message;
+                    count++;
+                }
+            }
             break;
         default:
             break;
     }
 
-    if (result == -1) {
+    if (result == -1 || result == NULL) {
         msg->opcode = MESSAGE_T__OPCODE__OP_ERROR;
         msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
         return -1;
@@ -105,26 +124,3 @@ int invoke(MessageT *msg, struct table_t *table) {
 
     return 0;
 }
-
-// switch (msg->opcode) {
-//         case OC_PUT:
-//             msg->content.result = 0;
-//             break;
-//         case OC_COND_PUT:
-//             msg->content.result = 0;
-//             break;
-//         case OC_GET:
-//             msg->content.data = data;
-//             break;
-//         case OC_DEL:
-//             msg->content.result = 0;
-//             break;
-//         case OC_SIZE:
-//             msg->content.result = result;
-//             break;
-//         case OC_GET_KEYS:
-//             msg->content.keys = entry;
-//             break;
-//         default:
-//             break;
-// }
