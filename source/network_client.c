@@ -1,19 +1,12 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
+#include <netinet/in.h>
 #include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include "client_stub.h"
-#include "sdmessage.pb-c.h"
-#include "table.h"
-#include "table-private.h"
+#include <arpa/inet.h>
 #include "network_client.h"
-#include "network_client-private.h"
+#include "client_stub-private.h"
 #include "message-private.h"
-#include "entry.h"
-#include "data.h"
 
 
 
@@ -120,16 +113,16 @@ MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg){
     }
 
     // Deserialize response
-    MessageT *response = message_t__unpack(NULL, msg_size, response_buf);
+    MessageT *response = message_t__unpack(NULL, msg_size, response_buffer);
     if (response == NULL) {
         perror("network_send_receive: message_t__unpack failed");
         free(msg_buf);
-        free(response_buf);
+        free(response_buffer);
         return NULL;
     }
 
     free(msg_buf);
-    free(response_buf);
+    free(response_buffer);
 
     return response;
 }

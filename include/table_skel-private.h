@@ -4,4 +4,6 @@
 #include "entry.h"
 #include "list.h"
 
-entry_t table_get_n_entry(struct list_t *list, int n);
+struct entry_t *table_get_n_entry(struct list_t *list, int n);
+
+#endif

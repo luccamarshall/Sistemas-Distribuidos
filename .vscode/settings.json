@@ -3,6 +3,7 @@
     "list.h": "c",
     "stdlib.h": "c",
     "table.h": "c",
-    "entry.h": "c"
+    "entry.h": "c",
+    "string.h": "c"
   }
 }

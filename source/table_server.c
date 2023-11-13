@@ -3,7 +3,6 @@
 #include "table.h"
 #include "table-private.h"
 #include "network_client.h"
-#include "network_client-private.h"
 #include "message-private.h"
 #include "entry.h"
 #include "data.h"

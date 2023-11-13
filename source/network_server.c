@@ -3,19 +3,18 @@
 #include "table.h"
 #include "table-private.h"
 #include "network_client.h"
-#include "network_client-private.h"
 #include "message-private.h"
 #include "entry.h"
 #include "data.h"
+#include "table_skel.h"
+
 #include <stdlib.h>
-#include <string.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-
-#
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 /* Função para preparar um socket de receção de pedidos de ligação
  * num determinado porto.
@@ -50,6 +49,84 @@ int network_server_init(short port){
     return sockfd;
 }
 
+
+/* A função network_receive() deve:
+ * - Ler os bytes da rede, a partir do client_socket indicado;
+ * - De-serializar estes bytes e construir a mensagem com o pedido,
+ *   reservando a memória necessária para a estrutura MessageT.
+ * Retorna a mensagem com o pedido ou NULL em caso de erro.
+ */
+MessageT *network_receive(int client_socket){
+    if (client_socket < 0) {
+        return NULL;
+    }
+    
+    // Receive message size
+    uint16_t response_size;
+    if (read_all(client_socket, &response_size, sizeof(uint16_t)) == -1) {
+        // Tratar erro de recebimento
+        return NULL;
+    }
+    uint16_t msg_size = ntohs(response_size);
+
+    uint8_t *response_buffer = malloc(response_size);
+    if (response_buffer == NULL) {
+        free(response_buffer);
+        return NULL;
+    }
+
+    if (read_all(client_socket, response_buffer, response_size) == -1) {
+        // Tratar erro de recebimento
+        free(response_buffer);
+        return NULL;
+    }
+
+    MessageT *received_message = message_t__unpack(NULL, msg_size, response_buffer);
+
+    free(response_buffer);
+
+    return received_message;
+}
+
+/* A função network_send() deve:
+ * - Serializar a mensagem de resposta contida em msg;
+ * - Enviar a mensagem serializada, através do client_socket.
+ * Retorna 0 (OK) ou -1 em caso de erro.
+ */
+int network_send(int client_socket, MessageT *msg){
+    if (client_socket < 0 || msg == NULL) {
+        return -1;
+    }
+
+    // Serialize message
+    size_t msg_size = message_t__get_packed_size(msg);
+    void *msg_buf = malloc(msg_size);
+    if (msg_buf == NULL) {
+        perror("network_send: malloc failed");
+        return -1;
+    }
+    message_t__pack(msg, msg_buf);
+
+    // Send message
+    uint16_t msg_size_n = htons(msg_size);
+    if (write_all(client_socket, &msg_size_n, sizeof(uint16_t)) == -1) {
+        // Tratar erro de envio
+        free(msg_buf);
+        return -1;
+    }
+
+    if (write_all(client_socket, msg_buf, msg_size) == -1) {
+        // Tratar erro de envio
+        free(msg_buf);
+        return -1;
+    }
+
+    free(msg_buf);
+
+    return 0;
+}
+
+
 /* A função network_main_loop() deve:
  * - Aceitar uma conexão de um cliente;
  * - Receber uma mensagem usando a função network_receive;
@@ -65,14 +142,24 @@ int network_main_loop(int listening_socket, struct table_t *table){
         return -1;
     }
 
+    int LeBlock = 0;
+    int client_socket;
     while (1) {
         // Accept connection
-        int client_socket = accept(listening_socket, NULL, NULL);
-        if (client_socket < 0) {
-            perror("network_main_loop: accept failed");
-            return -1;
-        }
+        if (LeBlock == 0) {
 
+            printf("Waiting for client connection...\n");
+            client_socket = accept(listening_socket, NULL, NULL);
+
+            if (client_socket < 0) {
+                perror("network_main_loop: accept failed");
+                return -1;
+            } else {
+                printf("Client connected\n");
+                LeBlock = 1;
+            }
+        }
+        
         // Receive message
         MessageT *msg = network_receive(client_socket);
         if (msg == NULL) {
@@ -102,46 +189,6 @@ int network_main_loop(int listening_socket, struct table_t *table){
 
         // Close connection
         close(client_socket);
-    }
-
-    return 0;
-}
-
-/* A função network_receive() deve:
- * - Ler os bytes da rede, a partir do client_socket indicado;
- * - De-serializar estes bytes e construir a mensagem com o pedido,
- *   reservando a memória necessária para a estrutura MessageT.
- * Retorna a mensagem com o pedido ou NULL em caso de erro.
- */
-MessageT *network_receive(int client_socket){
-    if (client_socket < 0) {
-        return NULL;
-    }
-
-    // Receive message
-    MessageT *msg = message_receive(client_socket);
-    if (msg == NULL) {
-        perror("network_receive: message_receive failed");
-        return NULL;
-    }
-
-    return msg;
-}
-
-/* A função network_send() deve:
- * - Serializar a mensagem de resposta contida em msg;
- * - Enviar a mensagem serializada, através do client_socket.
- * Retorna 0 (OK) ou -1 em caso de erro.
- */
-int network_send(int client_socket, MessageT *msg){
-    if (client_socket < 0 || msg == NULL) {
-        return -1;
-    }
-
-    // Send message
-    if (message_send(client_socket, msg) < 0) {
-        perror("network_send: message_send failed");
-        return -1;
     }
 
     return 0;

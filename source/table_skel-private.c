@@ -4,8 +4,9 @@
 
 #include "table_skel-private.h"
 #include "list.h"
+#include "entry.h"
 
-entry_t table_get_n_entry(struct list_t *list, int n) {
+struct entry_t *table_get_n_entry(struct list_t *list, int n) {
     if (list == NULL || n < 0 || n >= list->size) {
         return NULL;
     }
@@ -17,3 +18,4 @@ entry_t table_get_n_entry(struct list_t *list, int n) {
 
     return current->entry;
 }
+

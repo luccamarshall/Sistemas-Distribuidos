@@ -1,8 +1,11 @@
-#include "stdio.h" 
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include "client_stub.h"
 #include "client_stub-private.h"
 #include "message-private.h"
+#include "network_client.h"
 
 struct rtable_t *rtable_connect(char *address_port) {
   
@@ -36,7 +39,7 @@ struct rtable_t *rtable_connect(char *address_port) {
     rtable->server_port = atoi(port);
 
     // Create a socket and establish a connection
-    int sockfd = network_connect(address, rtable->server_port);
+    int sockfd = network_connect(rtable);
     if (sockfd < 0) {
         perror("rtable_connect: network_connect failed");
         free(rtable->server_address);
@@ -55,7 +58,7 @@ int rtable_disconnect(struct rtable_t *rtable) {
         return -1;
     }
 
-    if(network_close(rtable->sockfd) < 0) {
+    if(network_close(rtable) < 0) {
         perror("rtable_disconnect: network_close failed");
         return -1;
     }
@@ -75,21 +78,31 @@ int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
         return -1;
     }
 
-    // MessageT *request = create_put_request(entry);
-    MessageT *request = MESSAGE_T__INIT;
+    MessageT *request = malloc(sizeof(MessageT));
+    if (request == NULL) {
+        free(request);
+        return -1;
+    }
+    message_t__init(request);
     request->opcode = MESSAGE_T__OPCODE__OP_PUT;
     request->c_type = MESSAGE_T__C_TYPE__CT_ENTRY;
     request->key = entry->key;
 
-    EntryT *entry_message = ENTRY_T__INIT;
+    EntryT *entry_message = malloc(sizeof(EntryT));
+    if (entry_message == NULL) {
+        free(request);
+        free(entry_message);
+        return -1;
+    }
+    entry_t__init(entry_message);
     entry_message->key = entry->key;
     entry_message->value.data = (uint8_t *) entry->value->data;
     entry_message->value.len = (size_t) entry->value->datasize;
 
-    request->content.entry = entry_message;
+    request->entry = entry_message;
     
     // Send the message and receive the response
-    MessageT *response = network_send_receive(rtable->socket, request);
+    MessageT *response = network_send_receive(rtable, request);
 
     // Check if the response is valid
     if (response == NULL || response->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
@@ -111,19 +124,28 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
         return NULL;
     }
 
-    MessageT *request = MESSAGE_T__INIT;
+    MessageT *request = malloc(sizeof(MessageT));
+    if (request == NULL) {
+        free(request);
+        return NULL;
+    }
+    message_t__init(request);
     request->opcode = MESSAGE_T__OPCODE__OP_GET;
     request->c_type = MESSAGE_T__C_TYPE__CT_KEY;
     request->key = key;
 
-    EntryT *entry_message = ENTRY_T__INIT;
-    entry_message->key = entry->key;
-    entry_message->value.data = (uint8_t *) entry->value->data;
-    entry_message->value.len = (size_t) entry->value->datasize;
+    EntryT *entry_message = malloc(sizeof(EntryT));
+    if (entry_message == NULL) {
+        free(request);
+        free(entry_message);
+        return NULL;
+    }
+    entry_t__init(entry_message);
+    entry_message->key = key;
 
-    request->content.entry = entry_message;
+    request->entry = entry_message;
 
-    MessageT *response = network_send_receive(rtable->socket, request);
+    MessageT *response = network_send_receive(rtable, request);
 
     if (response == NULL || response->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
         fprintf(stderr, "rtable_get: response not valid\n");
@@ -147,22 +169,33 @@ int rtable_del(struct rtable_t *rtable, char *key) {
         return -1;
     }
 
-    MessageT *request = MESSAGE_T__INIT;
+    MessageT *request = malloc(sizeof(MessageT));
+    if (request == NULL) {
+        free(request);
+        return -1;
+    }
+    message_t__init(request);
     request->opcode = MESSAGE_T__OPCODE__OP_DEL;
     request->c_type = MESSAGE_T__C_TYPE__CT_KEY;
     request->key = key;
 
-    EntryT *entry_message = ENTRY_T__INIT;
-    entry_message->key = entry->key;
-    entry_message->value.data = (uint8_t *) entry->value->data;
-    entry_message->value.len = (size_t) entry->value->datasize;
+    EntryT *entry_message = malloc(sizeof(EntryT));
+    if (entry_message == NULL) {
+        free(request);
+        free(entry_message);
+        return -1;
+    }
+    entry_t__init(entry_message);
+    entry_message->key = key;
 
-    request->content.entry = entry_message;
+    request->entry = entry_message;
 
-    MessageT *response = network_send_receive(rtable->socket, request);
+    MessageT *response = network_send_receive(rtable, request);
 
     if (response == NULL || response->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
         fprintf(stderr, "rtable_del: response not valid\n");
+        free(request);
+        free(response);
         return -1;
     }
 
@@ -178,21 +211,30 @@ int rtable_size(struct rtable_t *rtable) {
         return -1;
     }
 
-    MessageT *request = MESSAGE_T__INIT;
+    MessageT *request = malloc(sizeof(MessageT));
+    if (request == NULL) {
+        free(request);
+        return -1;
+    }
+    message_t__init(request);
     request->opcode = MESSAGE_T__OPCODE__OP_SIZE;
     request->c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
-    MessageT *response = network_send_receive(rtable->socket, request);
+    MessageT *response = network_send_receive(rtable, request);
 
-    int size = (int) response->content.result;
+    int size = (int) response->result;
 
     if (response == NULL || response->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
         fprintf(stderr, "rtable_size: response not valid\n");
+        free(request);
+        free(response);
         return -1;
     }
 
     free(request);
     free(response);
+
+    return size;
 }
 
 char **rtable_get_keys(struct rtable_t *rtable) {
@@ -200,7 +242,45 @@ char **rtable_get_keys(struct rtable_t *rtable) {
         return NULL;
     }
 
-    
+    MessageT *request = malloc(sizeof(MessageT));
+    if (request == NULL) {
+        free(request);
+        return NULL;
+    }
+    message_t__init(request);
+    request->opcode = MESSAGE_T__OPCODE__OP_GETKEYS;
+    request->c_type = MESSAGE_T__C_TYPE__CT_NONE;
+
+    MessageT *response = network_send_receive(rtable, request);
+
+    if (response == NULL || response->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
+        fprintf(stderr, "rtable_get_keys: response not valid\n");
+        return NULL;
+    }
+
+    char **keys = (char **) malloc(sizeof(char *) * (response->n_keys + 1));
+    if (keys == NULL) {
+        perror("rtable_get_keys: malloc failed");
+        return NULL;
+    }
+
+    for (int i = 0; i < response->n_keys; i++) {
+        keys[i] = strdup(response->keys[i]);
+        if (keys[i] == NULL) {
+            perror("rtable_get_keys: strdup failed");
+            rtable_free_keys(keys);
+            free(request);
+            free(response);
+            return NULL;
+        }
+    }
+
+    keys[response->n_keys] = NULL;
+
+    free(request);
+    free(response);
+
+    return keys;
 }
 
 void rtable_free_keys(char **keys) {
@@ -220,32 +300,46 @@ struct entry_t **rtable_get_table(struct rtable_t *rtable) {
         return NULL;
     }
 
-    // Send request type
-    int request_type = GETTABLE;
-    if (write_all(rtable->sockfd, &request_type, sizeof(int)) < 0) {
-        perror("rtable_get_table: write request_type failed");
+    MessageT *request = malloc(sizeof(MessageT));
+    if (request == NULL) {
+        free(request);
+        return NULL;
+    }
+    message_t__init(request);
+    request->opcode = MESSAGE_T__OPCODE__OP_GETTABLE;
+    request->c_type = MESSAGE_T__C_TYPE__CT_NONE;
+    
+    MessageT *response = network_send_receive(rtable, request);
+
+    if (response == NULL || response->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
+        fprintf(stderr, "rtable_get_table: response not valid\n");
         return NULL;
     }
 
-    // Receive result
-    int result;
-    if (read_all(rtable->sockfd, &result, sizeof(int)) < 0) {
-        perror("rtable_get_table: read result failed");
+    struct entry_t **entries = (struct entry_t **) malloc(sizeof(struct entry_t *) * (response->n_entries + 1));
+
+    if (entries == NULL) {
+        perror("rtable_get_table: malloc failed");
         return NULL;
     }
 
-    if (result == 0) {
-        // Receive entries
-        struct entry_t **entries = entries_unmarshall(rtable->sockfd);
-        if (entries == NULL) {
-            perror("rtable_get_table: entries_unmarshall failed");
+    for (int i = 0; i < response->n_entries; i++) {
+        entries[i] = entry_create(response->entries[i]->key, data_create((int) response->entries[i]->value.len, (void *) response->entries[i]->value.data));
+        if (entries[i] == NULL) {
+            perror("rtable_get_table: entry_create failed");
+            rtable_free_entries(entries);
+            free(request);
+            free(response);
             return NULL;
         }
-
-        return entries;
-    } else {
-        return NULL;
     }
+
+    entries[response->n_entries] = NULL;
+
+    free(request);
+    free(response);
+
+    return entries;
 }
 
 void rtable_free_entries(struct entry_t **entries) {

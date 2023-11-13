@@ -1,11 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 
 #include "client_stub.h"
 #include "data.h"
 #include "entry.h"
-#include "client"
+#include "network_client.h"
+#include "sdmessage.pb-c.h"
+#include "client_stub-private.h"
+#include "message-private.h"
+
 
 #define MAX_COMMAND_LENGTH 1024
 
@@ -39,12 +44,12 @@ int main(int argc, char *argv[]) {
     char *server_address = argv[1];
     char *server_address_copy = strdup(server_address);
     server_address = strtok(server_address, ":");
-    int server_port = atoi(strtok(NULL, ":"));
+    strtok(NULL, ":");
     
     // Conecte-se ao servidor e verifique se a conexão foi bem-sucedida
     struct rtable_t *rtable = rtable_connect(server_address_copy);
     
-    if (network_connect(rtable, server_port) == -1) {
+    if (network_connect(rtable) == -1) {
         fprintf(stderr, "Erro ao criar a ligação ao servidor\n");
         free(rtable);
         exit(EXIT_FAILURE);
@@ -103,7 +108,8 @@ int main(int argc, char *argv[]) {
 
                 // Serialize the MessageT
                 size_t message_size = message_t__get_packed_size(&message);
-                uint8_t *message_data = serialize_message(&message);
+                uint8_t *message_data = malloc(message_size);
+                message_t__pack(&message, message_data);
                 int server_socket = rtable->sockfd;
                 ssize_t bytes = write_all(server_socket, message_data, message_size);
 
