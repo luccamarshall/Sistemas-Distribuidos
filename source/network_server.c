@@ -56,7 +56,7 @@ int network_server_init(short port){
  *   reservando a memória necessária para a estrutura MessageT.
  * Retorna a mensagem com o pedido ou NULL em caso de erro.
  */
-MessageT *network_receive(int client_socket){
+MessageT *network_receive(int client_socket) {
     if (client_socket < 0) {
         return NULL;
     }
@@ -69,18 +69,19 @@ MessageT *network_receive(int client_socket){
     }
     uint16_t msg_size = ntohs(response_size);
 
-    uint8_t *response_buffer = malloc(response_size);
+    uint8_t *response_buffer = malloc(msg_size);
     if (response_buffer == NULL) {
         free(response_buffer);
         return NULL;
     }
-
-    if (read_all(client_socket, response_buffer, response_size) == -1) {
+    
+    if (read_all(client_socket, &response_buffer, msg_size) == -1) {
         // Tratar erro de recebimento
         free(response_buffer);
+        printf("Error reading response message\n");
         return NULL;
     }
-
+    
     MessageT *received_message = message_t__unpack(NULL, msg_size, response_buffer);
 
     free(response_buffer);
@@ -109,12 +110,13 @@ int network_send(int client_socket, MessageT *msg){
 
     // Send message
     uint16_t msg_size_n = htons(msg_size);
+    
     if (write_all(client_socket, &msg_size_n, sizeof(uint16_t)) == -1) {
         // Tratar erro de envio
         free(msg_buf);
         return -1;
     }
-
+    
     if (write_all(client_socket, msg_buf, msg_size) == -1) {
         // Tratar erro de envio
         free(msg_buf);
@@ -141,7 +143,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
     if (listening_socket < 0 || table == NULL) {
         return -1;
     }
-
+    
     int LeBlock = 0;
     int client_socket;
     while (1) {
@@ -162,14 +164,16 @@ int network_main_loop(int listening_socket, struct table_t *table){
         
         // Receive message
         MessageT *msg = network_receive(client_socket);
+        
         if (msg == NULL) {
             perror("network_main_loop: network_receive failed");
             close(client_socket);
             return -1;
         }
-
+        
         // Invoke message
         int result = invoke(msg, table);
+        
         if (result == -1) {
             perror("network_main_loop: invoke failed");
             close(client_socket);

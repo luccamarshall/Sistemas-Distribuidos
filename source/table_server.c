@@ -2,10 +2,11 @@
 #include "sdmessage.pb-c.h"
 #include "table.h"
 #include "table-private.h"
-#include "network_client.h"
+#include "network_server.h"
 #include "message-private.h"
 #include "entry.h"
 #include "data.h"
+#include "table_skel.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/socket.h>
 #include "client_stub.h"
 #include "client_stub-private.h"
 #include "message-private.h"
@@ -39,7 +40,7 @@ struct rtable_t *rtable_connect(char *address_port) {
     rtable->server_port = atoi(port);
 
     // Create a socket and establish a connection
-    int sockfd = network_connect(rtable);
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
         perror("rtable_connect: network_connect failed");
         free(rtable->server_address);
@@ -103,7 +104,7 @@ int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
     
     // Send the message and receive the response
     MessageT *response = network_send_receive(rtable, request);
-
+    
     // Check if the response is valid
     if (response == NULL || response->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
         fprintf(stderr, "rtable_put: response not valid\n");
@@ -210,7 +211,7 @@ int rtable_size(struct rtable_t *rtable) {
     if (rtable == NULL) {
         return -1;
     }
-
+    
     MessageT *request = malloc(sizeof(MessageT));
     if (request == NULL) {
         free(request);
@@ -221,7 +222,7 @@ int rtable_size(struct rtable_t *rtable) {
     request->c_type = MESSAGE_T__C_TYPE__CT_NONE;
 
     MessageT *response = network_send_receive(rtable, request);
-
+    
     int size = (int) response->result;
 
     if (response == NULL || response->opcode == MESSAGE_T__OPCODE__OP_ERROR) {

@@ -10,9 +10,9 @@
 ssize_t read_all(int socket, void *buffer, size_t count) {
     size_t total_bytes_read = 0;
 
-    while (total_bytes_read < count) {
+    while (total_bytes_read <= count) {
         ssize_t bytes_read = read(socket, buffer + total_bytes_read, count - total_bytes_read);
-
+        
         if (bytes_read == -1) {
             return -1;
         } else if (bytes_read == 0) {

@@ -11,10 +11,6 @@
 #include "client_stub-private.h"
 #include "message-private.h"
 
-
-#define MAX_COMMAND_LENGTH 1024
-
-
 // O programa cliente consiste num programa interativo simples, que quando executado aceita
 // um comando (uma linha) do utilizador no stdin, invoca a chamada remota através da respetiva
 // função do stub (Secção 3.2), imprime a resposta recebida no ecrã e volta a aceitar um novo
@@ -87,29 +83,41 @@ int main(int argc, char *argv[]) {
                     continue;
                 }
                 // Create a MessageT structure and initialize it
-                MessageT message = MESSAGE_T__INIT;
+                MessageT *message = malloc(sizeof(MessageT));
+                if (message == NULL) {
+                    free(message);
+                    return -1;
+                }
+                message_t__init(message);
 
                 // Populate the fields of the MessageT
-                message.opcode = MESSAGE_T__OPCODE__OP_PUT;
-                message.c_type = MESSAGE_T__C_TYPE__CT_ENTRY;
-                message.key = key;
+                message->opcode = MESSAGE_T__OPCODE__OP_PUT;
+                message->c_type = MESSAGE_T__C_TYPE__CT_ENTRY;
+                message->key = key;
 
                 // Create and populate the EntryT
-                EntryT entry_message = ENTRY_T__INIT;
-                entry_message.key = key;
+                EntryT *entry_message = malloc(sizeof(EntryT));
+                if (entry_message == NULL) {
+                    free(entry_message);
+                    return -1;
+                }
+                entry_t__init(entry_message);
+                entry_message->key = key;
 
                 // Create and populate the ProtobufCBinaryData
                 ProtobufCBinaryData value_message;
                 value_message.data = (uint8_t *)data;
                 value_message.len = data->datasize;  
 
-                entry_message.value = value_message;
-                message.entry = &entry_message;
+                entry_message->value = value_message;
+                message->entry = entry_message;
+
+                message->entry = entry_message;
 
                 // Serialize the MessageT
-                size_t message_size = message_t__get_packed_size(&message);
+                size_t message_size = message_t__get_packed_size(message);
                 uint8_t *message_data = malloc(message_size);
-                message_t__pack(&message, message_data);
+                message_t__pack(message, message_data);
                 int server_socket = rtable->sockfd;
                 ssize_t bytes = write_all(server_socket, message_data, message_size);
 
@@ -118,7 +126,7 @@ int main(int argc, char *argv[]) {
                 } else if (bytes != message_size) {
                     fprintf(stderr, "Error: Incomplete message sent.\n");
                 } else {
-
+                    printf("Message sent successfully.\n");
                     if (rtable_put(rtable, entry) == 0) {
                         printf("Put operation succeeded.\n");
                     } else {
