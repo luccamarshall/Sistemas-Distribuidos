@@ -140,7 +140,6 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
 
     // Check if the response contains a valid data
     if (response->opcode != MESSAGE_T__OPCODE__OP_ERROR && response->c_type == MESSAGE_T__C_TYPE__CT_VALUE) {
-        struct data_t *data = data_create(response->value.len, response->value.data);
         void *data = malloc(response->value.len);
         memcpy(data, response->value.data, response->value.len);
         struct data_t *data_t = data_create(response->value.len, data);
