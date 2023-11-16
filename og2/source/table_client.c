@@ -64,7 +64,6 @@ int main(int argc, char *argv[]) {
 
             char *key = strtok(NULL, " \n");
             char *data_given = strtok(NULL, "\n");
-
             if (key && data_given) {
                 struct data_t *data = data_create(strlen(data_given), data_given);
                 struct entry_t *entry = entry_create(key, data);
@@ -119,16 +118,17 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "Invalid put command. Usage: put <key> <data>\n");
             }
         } else if (strcmp(token, "get") == 0) {
-            char *key = strtok(NULL, "\n");
-            if (key) {
+            char *key = strtok(NULL, " \n");
+            if (key != NULL) {
                 struct data_t *data = rtable_get(rtable, key);
-                if (data != NULL) {
-                    printf("Data for key '%s': %p\n", key, data->data);
-                    data_destroy(data);
+                char *str = (char*)data;
+                for (int i = 0; str[i] != '\0'; i++) {
+                    printf("%c", str[i]);
+                }
+                printf("\n");
                 } else {
                     fprintf(stderr, "Get operation failed.\n");
                 }
-            }
         } else if (strcmp(token, "del") == 0) {
             char *key = strtok(NULL, "\n");
             if (key) {
@@ -161,7 +161,13 @@ int main(int argc, char *argv[]) {
             if (table != NULL) {
                 printf("Entries in the table:\n");
                 for (int i = 0; table[i] != NULL; i++) {
-                    printf("Key: %s, Data: %p\n", table[i]->key, table[i]->value->data);
+                    char *str = (char*)table[i]->value->data;
+                    printf("Key: %s, \n", table[i]->key);
+                    printf("Data: ");
+                    for (int i = 0; str[i] != '\0'; i++) {
+                        printf("%c", str[i]);
+                    }
+                    printf("\n");
                 }
                 rtable_free_entries(table);
             } else {

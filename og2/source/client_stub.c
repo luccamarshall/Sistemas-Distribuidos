@@ -141,22 +141,33 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
     // Check if the response contains a valid data
     if (response->opcode != MESSAGE_T__OPCODE__OP_ERROR && response->c_type == MESSAGE_T__C_TYPE__CT_VALUE) {
         struct data_t *data = data_create(response->value.len, response->value.data);
+        void *data = malloc(response->value.len);
+        memcpy(data, response->value.data, response->value.len);
+        struct data_t *data_t = data_create(response->value.len, data);
         if (data == NULL) {
             perror("Memory allocation error");
             return NULL;
         }
-        
-        data->datasize = response->value.len;
-        data->data = (char *)malloc(data->datasize);
-        if (data->data == NULL) {
-            free(data);
-            perror("Memory allocation error");
-            return NULL;
-        }
 
-        memcpy(data->data, response->value.data, data->datasize);
+        printf("Data: ");
+        char *str = (char*)data;
+        for (int i = 0; str[i] != '\0'; i++) {
+            printf("%c", str[i]);
+        }
+        printf("\n");
+        return data_t;
+
+        // data->datasize = response->value.len;
+        // data->data = malloc(data->datasize);
+        // if (data->data == NULL) {
+        //     free(data);
+        //     perror("Memory allocation error");
+        //     return NULL;
+        // }
+
+        // memcpy(data->data, response->value.data, data->datasize);
         
-        return data;
+        // return data;
     }
 
     // Handle the case when the response is not valid
