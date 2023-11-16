@@ -4,7 +4,7 @@
 
 #include "data.h"
 
-struct data_t *data_create(int size, void *data){
+struct data_t *data_create(int size, void *data) {
     struct data_t *data_t = (struct data_t*) malloc(sizeof(struct data_t));
     if(data_t == NULL || size <= 0 || data == NULL) {
         free(data_t);

@@ -70,15 +70,65 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(token, "put") == 0) {
 
             char *key = strtok(NULL, " \n");
-            char *data_given = strtok(NULL, "\n");
+            char *data_given = NULL;
+            size_t data_size = 0;
 
-            if (key && data_given) {
-                struct data_t *data = data_create(strlen(data_given), data_given);
+            if (key) {
+                char buffer[1024];
+
+                while (1) {
+                    if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
+                        if (feof(stdin)) {
+                            break; // End of file, break the loop
+                        } else {
+                            perror("Failed to read data");
+                            free(data_given);
+                            return -1;
+                        }
+                    }
+
+                    size_t buffer_len = strlen(buffer);
+                    size_t new_size = data_size + buffer_len;
+                    char *temp = realloc(data_given, new_size + 1); // +1 for the null terminator
+                    if (temp == NULL) {
+                        perror("Failed to allocate memory for data");
+                        free(data_given);
+                        return -1;
+                    }
+                    data_given = temp;
+
+                    strcpy(data_given + data_size, buffer);
+                    data_size = new_size;
+
+                    // If the line ends with a newline character, break the loop
+                    if (buffer[buffer_len - 1] == '\n') {
+                        break;
+                    }
+                }
+                printf("Saiu\n");
+
+                // Remove the trailing newline character, if present
+                if (data_size > 0 && data_given[data_size - 1] == '\n') {
+                    data_given[data_size - 1] = '\0';
+                    data_size--;
+                }
+
+                for (int i = 0; i < data_size; i++) {
+                    printf("%c", data_given[i]);
+                }
+
+                struct data_t *data = data_create(data_size, data_given);
                 struct entry_t *entry = entry_create(key, data);
                 
-                if (data == NULL || entry == NULL) {
-                    fprintf(stderr, "Failed to create data or entry.\n");
+                if (data == NULL) {
+                    fprintf(stderr, "Failed to create data.\n");
                     if (data != NULL) data_destroy(data);
+                    if (entry != NULL) entry_destroy(entry);
+                    continue;
+                }
+
+                if (entry == NULL) {
+                    fprintf(stderr, "Failed to create entry.\n");
                     if (entry != NULL) entry_destroy(entry);
                     continue;
                 }
@@ -126,7 +176,7 @@ int main(int argc, char *argv[]) {
                 } else if (bytes != message_size) {
                     fprintf(stderr, "Error: Incomplete message sent.\n");
                 } else {
-                    printf("Message sent successfully.\n");
+                    
                     if (rtable_put(rtable, entry) == 0) {
                         printf("Put operation succeeded.\n");
                     } else {

@@ -66,7 +66,7 @@ MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg) {
     }
     
     int sockfd = rtable->sockfd;
-
+    
     // Serialize message
     size_t msg_size = message_t__get_packed_size(msg);
     void *msg_buf = malloc(msg_size);
@@ -78,12 +78,14 @@ MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg) {
     
     // Send message
     uint16_t msg_size_n = htons((uint16_t) msg_size);
+    printf("11111111111111111111111\n");
     if (write_all(sockfd, &msg_size_n, sizeof(uint16_t)) == -1) {
         // Tratar erro de envio
         free(msg_buf);
         return NULL;
     }
-    
+
+    printf("2222222222222222222\n");
     if (write_all(sockfd, msg_buf, msg_size) == -1) {
         // Tratar erro de envio
         free(msg_buf);
@@ -92,6 +94,7 @@ MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg) {
     
     // Receive message size
     uint16_t response_size;
+    printf("333\n");
     if (read_all(sockfd, &response_size, sizeof(uint16_t)) == -1) {
        printf("Error reading response size\n");
         return NULL;
@@ -104,13 +107,14 @@ MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg) {
         // Tratar erro de alocação de memória
         return NULL;
     }
-
+    printf("4444\n");
     // Recebe o buffer de resposta
     if (read_all(sockfd, response_buffer, response_size) == -1) {
         // Tratar erro de recebimento
         free(response_buffer);
         return NULL;
     }
+    printf("555555\n");
     // Deserialize response
     MessageT *response = message_t__unpack(NULL, (size_t) response_size, response_buffer);
     if (response == NULL) {
@@ -119,7 +123,7 @@ MessageT *network_send_receive(struct rtable_t *rtable, MessageT *msg) {
         free(response_buffer);
         return NULL;
     }
-
+    printf("66666666666666666666\n");
     free(msg_buf);
     free(response_buffer);
 

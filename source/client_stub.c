@@ -101,10 +101,9 @@ int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
     entry_message->value.len = (size_t) entry->value->datasize;
 
     request->entry = entry_message;
-    
     // Send the message and receive the response
     MessageT *response = network_send_receive(rtable, request);
-    
+    printf("recebeu? :(((((((((((((\n");
     // Check if the response is valid
     if (response == NULL || response->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
         fprintf(stderr, "rtable_put: response not valid\n");
