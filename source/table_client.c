@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <ctype.h>
 
 #include "client_stub.h"
 #include "data.h"
@@ -69,69 +70,31 @@ int main(int argc, char *argv[]) {
             return 0;
         } else if (strcmp(token, "put") == 0) {
 
-            char *key = strtok(NULL, " \n");
-            char *data_given = NULL;
-            size_t data_size = 0;
+            char *key = strtok(NULL, " ");
+            char *data = strtok(NULL, "\n");
 
-            if (key) {
-                char buffer[1024];
+            if (key && data) {
 
-                while (1) {
-                    if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
-                        if (feof(stdin)) {
-                            break; // End of file, break the loop
-                        } else {
-                            perror("Failed to read data");
-                            free(data_given);
-                            return -1;
-                        }
-                    }
-
-                    size_t buffer_len = strlen(buffer);
-                    size_t new_size = data_size + buffer_len;
-                    char *temp = realloc(data_given, new_size + 1); // +1 for the null terminator
-                    if (temp == NULL) {
-                        perror("Failed to allocate memory for data");
-                        free(data_given);
-                        return -1;
-                    }
-                    data_given = temp;
-
-                    strcpy(data_given + data_size, buffer);
-                    data_size = new_size;
-
-                    // If the line ends with a newline character, break the loop
-                    if (buffer[buffer_len - 1] == '\n') {
-                        break;
-                    }
+                int data_size = strlen(data) + 1;
+                void *data_given = malloc(data_size);
+                
+                if(data_given == NULL) {
+                    fprintf(stderr, "Error: Failed to allocate memory for data.\n");
+                    return -1;
                 }
-                printf("Saiu\n");
-
-                // Remove the trailing newline character, if present
-                if (data_size > 0 && data_given[data_size - 1] == '\n') {
-                    data_given[data_size - 1] = '\0';
-                    data_size--;
-                }
-
-                for (int i = 0; i < data_size; i++) {
-                    printf("%c", data_given[i]);
-                }
+                memcpy(data_given, data, data_size);
 
                 struct data_t *data = data_create(data_size, data_given);
                 struct entry_t *entry = entry_create(key, data);
+                free(data_given);
                 
-                if (data == NULL) {
-                    fprintf(stderr, "Failed to create data.\n");
+                if (data == NULL || entry == NULL) {
+                    fprintf(stderr, "Failed to create data or entry.\n");
                     if (data != NULL) data_destroy(data);
                     if (entry != NULL) entry_destroy(entry);
                     continue;
                 }
 
-                if (entry == NULL) {
-                    fprintf(stderr, "Failed to create entry.\n");
-                    if (entry != NULL) entry_destroy(entry);
-                    continue;
-                }
                 // Create a MessageT structure and initialize it
                 MessageT *message = malloc(sizeof(MessageT));
                 if (message == NULL) {
@@ -164,36 +127,28 @@ int main(int argc, char *argv[]) {
 
                 message->entry = entry_message;
 
-                // Serialize the MessageT
-                size_t message_size = message_t__get_packed_size(message);
-                uint8_t *message_data = malloc(message_size);
-                message_t__pack(message, message_data);
-                int server_socket = rtable->sockfd;
-                ssize_t bytes = write_all(server_socket, message_data, message_size);
-
-                if (bytes < 0) { 
-                    fprintf(stderr, "Error: Failed to serialize message.\n");
-                } else if (bytes != message_size) {
-                    fprintf(stderr, "Error: Incomplete message sent.\n");
-                } else {
-                    
-                    if (rtable_put(rtable, entry) == 0) {
+                if (rtable_put(rtable, entry) == 0) {
                         printf("Put operation succeeded.\n");
                     } else {
                         fprintf(stderr, "Put operation failed.\n");
                     }
-
-                    free(message_data);
-                }
             } else {
                 fprintf(stderr, "Invalid put command. Usage: put <key> <data>\n");
             }
         } else if (strcmp(token, "get") == 0) {
-            char *key = strtok(NULL, "\n");
+            char *key = strtok(NULL, " ");
             if (key) {
                 struct data_t *data = rtable_get(rtable, key);
                 if (data != NULL) {
-                    printf("Data for key '%s': %p\n", key, data->data);
+
+                    printf("Data for key '%s':", key);
+                    
+                    char *str = (char*)data;
+                    for (int i = 0; str[i] != '\0'; i++) {
+                        printf("%c", str[i]);
+                    }
+                    printf("\n");
+
                     data_destroy(data);
                 } else {
                     fprintf(stderr, "Get operation failed.\n");
