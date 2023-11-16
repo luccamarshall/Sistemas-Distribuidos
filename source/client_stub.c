@@ -113,7 +113,7 @@ int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
         return -1;
     }
     free(request);
-    free(response);
+    free(response); 
     free(entry_message);
 
     return 0;
@@ -129,6 +129,7 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
         free(request);
         return NULL;
     }
+
     message_t__init(request);
     request->opcode = MESSAGE_T__OPCODE__OP_GET;
     request->c_type = MESSAGE_T__C_TYPE__CT_KEY;
@@ -154,14 +155,25 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
         free(entry_message);
         return NULL;
     }
+    
+    void *data = malloc(response->value.len);
+    memcpy(data, response->value.data, response->value.len);
+    struct data_t *data_t = data_create((int) response->value.len, data);
 
-    struct data_t *data = data_create((int) response->value.len, (void *) response->value.data);
+    if (data == NULL) {
+        perror("Memory allocation error");
+        free(data);
+        free(request);
+        free(response);
+        free(entry_message);
+        return NULL;
+    }
 
     free(request);
     free(response);
     free(entry_message);
 
-    return data;
+    return data_t;
 }
 
 int rtable_del(struct rtable_t *rtable, char *key) {

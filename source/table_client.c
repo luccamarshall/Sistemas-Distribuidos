@@ -71,23 +71,21 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(token, "put") == 0) {
 
             char *key = strtok(NULL, " ");
-            char *data = strtok(NULL, "\n");
+            char *data_read = strtok(NULL, "\n");
 
-            if (key && data) {
+            if (key && data_read) {
 
-                int data_size = strlen(data) + 1;
+                int data_size = strlen(data_read) + 1;
                 void *data_given = malloc(data_size);
                 
                 if(data_given == NULL) {
                     fprintf(stderr, "Error: Failed to allocate memory for data.\n");
                     return -1;
                 }
-                memcpy(data_given, data, data_size);
-
+                memcpy(data_given, data_read, data_size);
                 struct data_t *data = data_create(data_size, data_given);
                 struct entry_t *entry = entry_create(key, data);
-                free(data_given);
-                
+
                 if (data == NULL || entry == NULL) {
                     fprintf(stderr, "Failed to create data or entry.\n");
                     if (data != NULL) data_destroy(data);
@@ -119,12 +117,10 @@ int main(int argc, char *argv[]) {
 
                 // Create and populate the ProtobufCBinaryData
                 ProtobufCBinaryData value_message;
-                value_message.data = (uint8_t *)data;
-                value_message.len = data->datasize;  
-
+                value_message.data = (uint8_t *)data->data;
+                value_message.len = data->datasize;
+                
                 entry_message->value = value_message;
-                message->entry = entry_message;
-
                 message->entry = entry_message;
 
                 if (rtable_put(rtable, entry) == 0) {
@@ -132,22 +128,17 @@ int main(int argc, char *argv[]) {
                     } else {
                         fprintf(stderr, "Put operation failed.\n");
                     }
+                free(data_given);
             } else {
                 fprintf(stderr, "Invalid put command. Usage: put <key> <data>\n");
             }
         } else if (strcmp(token, "get") == 0) {
-            char *key = strtok(NULL, " ");
-            if (key) {
+            char *key = strtok(NULL, " \n");
+            if (key != NULL) {
                 struct data_t *data = rtable_get(rtable, key);
                 if (data != NULL) {
 
-                    printf("Data for key '%s':", key);
-                    
-                    char *str = (char*)data;
-                    for (int i = 0; str[i] != '\0'; i++) {
-                        printf("%c", str[i]);
-                    }
-                    printf("\n");
+                    printf("Data for key '%s': '%s'\n", key, (char *) data->data);
 
                     data_destroy(data);
                 } else {
@@ -186,7 +177,7 @@ int main(int argc, char *argv[]) {
             if (table != NULL) {
                 printf("Entries in the table:\n");
                 for (int i = 0; table[i] != NULL; i++) {
-                    printf("Key: %s, Data: %p\n", table[i]->key, table[i]->value->data);
+                    printf("Key: %s, data: '%s' \n", table[i]->key, (char *) table[i]->value->data);
                 }
                 rtable_free_entries(table);
             } else {
