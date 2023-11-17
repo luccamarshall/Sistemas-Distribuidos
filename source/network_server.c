@@ -75,14 +75,14 @@ MessageT *network_receive(int client_socket) {
         return NULL;
     }
     
-    if (read_all(client_socket, &response_buffer, msg_size) == -1) {
+    if (read_all(client_socket, response_buffer, msg_size) == -1) {
         // Tratar erro de recebimento
         free(response_buffer);
         printf("Error reading response message\n");
         return NULL;
     }
     
-    MessageT *received_message = message_t__unpack(NULL, msg_size, response_buffer);
+    MessageT *received_message = message_t__unpack(NULL, (size_t) msg_size, response_buffer);
 
     free(response_buffer);
 
@@ -94,7 +94,7 @@ MessageT *network_receive(int client_socket) {
  * - Enviar a mensagem serializada, através do client_socket.
  * Retorna 0 (OK) ou -1 em caso de erro.
  */
-int network_send(int client_socket, MessageT *msg){
+int network_send(int client_socket, MessageT *msg) {
     if (client_socket < 0 || msg == NULL) {
         return -1;
     }
@@ -106,10 +106,10 @@ int network_send(int client_socket, MessageT *msg){
         perror("network_send: malloc failed");
         return -1;
     }
-    message_t__pack(msg, msg_buf);
+    message_t__pack(msg, (uint8_t *) msg_buf);
 
     // Send message
-    uint16_t msg_size_n = htons(msg_size);
+    uint16_t msg_size_n = htons((uint16_t) msg_size);
     
     if (write_all(client_socket, &msg_size_n, sizeof(uint16_t)) == -1) {
         // Tratar erro de envio
@@ -161,19 +161,19 @@ int network_main_loop(int listening_socket, struct table_t *table){
                 LeBlock = 1;
             }
         }
-        
+        printf("ANTESYUIHDABNUYD\n");
         // Receive message
         MessageT *msg = network_receive(client_socket);
-        
+
         if (msg == NULL) {
             perror("network_main_loop: network_receive failed");
             close(client_socket);
             return -1;
         }
-        
+        printf("YOOOOOOO\n");
         // Invoke message
         int result = invoke(msg, table);
-        
+        printf("DOSSSSSSSSSSSSSS\n");
         if (result == -1) {
             perror("network_main_loop: invoke failed");
             close(client_socket);
@@ -182,6 +182,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
 
         // Send message
         result = network_send(client_socket, msg);
+        printf("GANG\n");
         if (result == -1) {
             perror("network_main_loop: network_send failed");
             close(client_socket);
@@ -190,7 +191,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
 
         // Free message
         message_t__free_unpacked(msg, NULL);
-
+        printf("Ydouvlewafsf\n");
         // Close connection
         close(client_socket);
     }

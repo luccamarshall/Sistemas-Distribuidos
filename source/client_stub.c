@@ -65,11 +65,6 @@ int rtable_disconnect(struct rtable_t *rtable) {
     }
 
     free(rtable->server_address);
-    if (close(rtable->sockfd) < 0) {
-        perror("rtable_disconnect: close socket failed");
-        return -1;
-    }
-
     free(rtable);
     return 0;
 }

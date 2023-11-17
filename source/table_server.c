@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    printf("Servidor inicializado... esperando conecções\n");
+    printf("Server ready, waiting for connections\n");
 
     // Inicialize o socket do servidor
     int server_socket = network_server_init(port);
