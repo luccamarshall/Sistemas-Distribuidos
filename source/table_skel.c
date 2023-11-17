@@ -70,7 +70,6 @@ int invoke(MessageT *msg, struct table_t *table) {
                 return -1;
             }
             result = table_put(table, msg->entry->key, new_data);
-            printf("result: %d\n", result);
             msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             break;
         case MESSAGE_T__OPCODE__OP_GET:
@@ -84,6 +83,9 @@ int invoke(MessageT *msg, struct table_t *table) {
             break;
         case MESSAGE_T__OPCODE__OP_DEL:
             result = table_remove(table, msg->key);
+            if (result == 1) {
+                printf("Error in rtable_del or key not found!");
+            }
             msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             break;
         case MESSAGE_T__OPCODE__OP_SIZE:
@@ -138,8 +140,9 @@ int invoke(MessageT *msg, struct table_t *table) {
         msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
         return -1;
     }
-
-    msg->opcode = msg->opcode+1;
+    if (result == 0){
+        msg->opcode = msg->opcode+1;
+    }
 
     return 0;
 }
