@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
                 if (rtable_del(rtable, key) == 0) {
                     printf("Delete operation succeeded.\n");
                 } else {
-                    fprintf(stderr, "Delete operation failed.\n");
+                    printf("Error in rtable_del or key not found!\n");
                 }
             }
         } else if (strcmp(token, "size") == 0) {

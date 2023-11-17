@@ -203,6 +203,10 @@ int rtable_del(struct rtable_t *rtable, char *key) {
         free(request);
         free(response);
         return -1;
+    } else if (response->opcode == MESSAGE_T__OPCODE__OP_DEL) {
+        free(request);
+        free(response);
+        return 1;
     }
 
     free(request);
@@ -317,8 +321,11 @@ struct entry_t **rtable_get_table(struct rtable_t *rtable) {
     
     MessageT *response = network_send_receive(rtable, request);
 
-    if (response == NULL || response->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
+    if (response->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
         fprintf(stderr, "rtable_get_table: response not valid\n");
+        return NULL;
+    } else if (response == NULL) {
+        printf("IT>>S O>IPANDiuajsf\n");
         return NULL;
     }
 

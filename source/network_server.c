@@ -106,7 +106,12 @@ int network_send(int client_socket, MessageT *msg) {
         perror("network_send: malloc failed");
         return -1;
     }
-    message_t__pack(msg, (uint8_t *) msg_buf);
+    size_t packed_size = message_t__pack(msg, (uint8_t *) msg_buf);
+    if (packed_size != msg_size) {
+        perror("network_send: message_t__pack failed");
+        free(msg_buf);
+        return -1;
+    }
 
     // Send message
     uint16_t msg_size_n = htons((uint16_t) msg_size);
@@ -173,27 +178,25 @@ int network_main_loop(int listening_socket, struct table_t *table){
         int result = invoke(msg, table);
         printf("DOSSSSSSSSSSSSSS\n");
 
-        int continue_loop = 1;
         if (result == 2) {
             LeBlock = 0;
             close(client_socket);
-            continue_loop = 0;
+            continue;
         }
 
-        if (continue_loop == 1) {
-            // Send message
-            result = network_send(client_socket, msg);
-            printf("GANG\n");
-            if (result == -1) {
-                perror("network_main_loop: network_send failed");
-                close(client_socket);
-                return -1;
-            }
-
-            // Free message
-            message_t__free_unpacked(msg, NULL);
-            printf("Ydouvlewafsf\n");
+        // Send message
+        result = network_send(client_socket, msg);
+        printf("GANG\n");
+        if (result == -1) {
+            perror("network_main_loop: network_send failed");
+            close(client_socket);
+            return -1;
         }
+
+        // Free message
+        message_t__free_unpacked(msg, NULL);
+        printf("Ydouvlewafsf\n");
+
         
     }
 

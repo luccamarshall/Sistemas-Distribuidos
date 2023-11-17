@@ -83,9 +83,9 @@ int invoke(MessageT *msg, struct table_t *table) {
             break;
         case MESSAGE_T__OPCODE__OP_DEL:
             result = table_remove(table, msg->key);
-            if (result == 1) {
-                printf("Error in rtable_del or key not found!\n");
-            }
+            // if (result == 1) {
+            //     printf("Error in rtable_del or key not found!\n");
+            // }
             msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             break;
         case MESSAGE_T__OPCODE__OP_SIZE:
@@ -107,6 +107,7 @@ int invoke(MessageT *msg, struct table_t *table) {
             msg->c_type = MESSAGE_T__C_TYPE__CT_TABLE;
             msg->n_entries = (size_t) table->num_entries;
             int count = 0;
+            result = 0;
             for (int i = 0; i < table->size && table->lists[i] != NULL; i++) {
                 for (int j = 0; j < table->lists[i]->size; j++) {
                     struct entry_t *entry = table_get_n_entry(table->lists[i], j);
@@ -114,6 +115,7 @@ int invoke(MessageT *msg, struct table_t *table) {
                         EntryT *entry_message = malloc(sizeof(EntryT));
                         if (entry_message == NULL) {
                             free(entry_message);
+                            printf("FIRST ONE\n");
                             return -1;
                         }
                         entry_t__init(entry_message);
@@ -125,14 +127,16 @@ int invoke(MessageT *msg, struct table_t *table) {
                             count++;
                         } else {
                             free(entry_message);
+                            printf("SECOND ONE\n");
                             return -1;
                         }
+                    } else {
+                        return -1;
                     }
                 }
             }
             break;
         default:
-            printf("Deu quit :P\n");
             result = 2;
             break;
     }
@@ -141,6 +145,8 @@ int invoke(MessageT *msg, struct table_t *table) {
         msg->opcode = MESSAGE_T__OPCODE__OP_ERROR;
         msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
         return -1;
+    } else if (result == 1) {
+        return 1;
     } else if (result == 2) {
         return 2;
     }
