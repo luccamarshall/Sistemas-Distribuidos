@@ -166,17 +166,14 @@ int network_main_loop(int listening_socket, struct table_t *table){
                 LeBlock = 1;
             }
         }
-        printf("ANTESYUIHDABNUYD\n");
         MessageT *msg = NULL;
 
         while(msg == NULL) {
             msg = network_receive(client_socket);
         }
 
-        printf("YOOOOOOO\n");
         // Invoke message
         int result = invoke(msg, table);
-        printf("DOSSSSSSSSSSSSSS\n");
 
         if (result == 2) {
             LeBlock = 0;
@@ -186,7 +183,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
 
         // Send message
         result = network_send(client_socket, msg);
-        printf("GANG\n");
+        
         if (result == -1) {
             perror("network_main_loop: network_send failed");
             close(client_socket);
@@ -195,9 +192,6 @@ int network_main_loop(int listening_socket, struct table_t *table){
 
         // Free message
         message_t__free_unpacked(msg, NULL);
-        printf("Ydouvlewafsf\n");
-
-        
     }
 
     return 0;

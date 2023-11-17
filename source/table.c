@@ -26,7 +26,7 @@ struct table_t *table_create(int n)
 
     for (int i = 0; i < n; i++)
     {
-        table->lists[i] = NULL;
+        table->lists[i] = list_create();
     }
 
     return table;
