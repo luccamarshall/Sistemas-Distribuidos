@@ -61,9 +61,16 @@ int invoke(MessageT *msg, struct table_t *table) {
 
     switch (msg->opcode) {
         case MESSAGE_T__OPCODE__OP_PUT:
-            int size_data = (int) msg->entry->value.len;
-            struct data_t *new_data = data_create(size_data, (void *) msg->value.data);
+            void *n_data = malloc(msg->entry->value.len);
+            memcpy(n_data, msg->entry->value.data, msg->entry->value.len);
+            struct data_t *new_data = data_create((int) msg->entry->value.len, n_data);
+            if(new_data == NULL) {
+                printf("Error: Failed to create data.\n");
+                free(new_data);
+                return -1;
+            }
             result = table_put(table, msg->entry->key, new_data);
+            printf("result: %d\n", result);
             msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             break;
         case MESSAGE_T__OPCODE__OP_GET:
