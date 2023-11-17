@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
 
                     data_destroy(data);
                 } else {
-                    fprintf(stderr, "Get operation failed.\n");
+                    printf("Error in rtable_get or key not found!\n");
                 }
             }
         } else if (strcmp(token, "del") == 0) {

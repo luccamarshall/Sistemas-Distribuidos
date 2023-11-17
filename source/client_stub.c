@@ -144,7 +144,6 @@ struct data_t *rtable_get(struct rtable_t *rtable, char *key) {
     MessageT *response = network_send_receive(rtable, request);
 
     if (response == NULL || response->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
-        fprintf(stderr, "rtable_get: response not valid\n");
         free(request);
         free(response);
         free(entry_message);
@@ -200,7 +199,7 @@ int rtable_del(struct rtable_t *rtable, char *key) {
     MessageT *response = network_send_receive(rtable, request);
 
     if (response == NULL || response->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
-        fprintf(stderr, "rtable_del: response not valid\n");
+        fprintf(stderr, "Error in rtable_del or key not found!\n");
         free(request);
         free(response);
         return -1;

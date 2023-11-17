@@ -162,38 +162,39 @@ int network_main_loop(int listening_socket, struct table_t *table){
             }
         }
         printf("ANTESYUIHDABNUYD\n");
-        // Receive message
-        MessageT *msg = network_receive(client_socket);
+        MessageT *msg = NULL;
 
-        if (msg == NULL) {
-            perror("network_main_loop: network_receive failed");
-            close(client_socket);
-            return -1;
+        while(msg == NULL) {
+            msg = network_receive(client_socket);
         }
+
         printf("YOOOOOOO\n");
         // Invoke message
         int result = invoke(msg, table);
         printf("DOSSSSSSSSSSSSSS\n");
-        if (result == -1) {
-            perror("network_main_loop: invoke failed");
+
+        int continue_loop = 1;
+        if (result == 2) {
+            LeBlock = 0;
             close(client_socket);
-            return -1;
+            continue_loop = 0;
         }
 
-        // Send message
-        result = network_send(client_socket, msg);
-        printf("GANG\n");
-        if (result == -1) {
-            perror("network_main_loop: network_send failed");
-            close(client_socket);
-            return -1;
-        }
+        if (continue_loop == 1) {
+            // Send message
+            result = network_send(client_socket, msg);
+            printf("GANG\n");
+            if (result == -1) {
+                perror("network_main_loop: network_send failed");
+                close(client_socket);
+                return -1;
+            }
 
-        // Free message
-        message_t__free_unpacked(msg, NULL);
-        printf("Ydouvlewafsf\n");
-        // Close connection
-        close(client_socket);
+            // Free message
+            message_t__free_unpacked(msg, NULL);
+            printf("Ydouvlewafsf\n");
+        }
+        
     }
 
     return 0;

@@ -84,7 +84,7 @@ int invoke(MessageT *msg, struct table_t *table) {
         case MESSAGE_T__OPCODE__OP_DEL:
             result = table_remove(table, msg->key);
             if (result == 1) {
-                printf("Error in rtable_del or key not found!");
+                printf("Error in rtable_del or key not found!\n");
             }
             msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             break;
@@ -142,7 +142,7 @@ int invoke(MessageT *msg, struct table_t *table) {
         msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
         return -1;
     } else if (result == 2) {
-        return 0;
+        return 2;
     }
 
     if (result == 0) {
