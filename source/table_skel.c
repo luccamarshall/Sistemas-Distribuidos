@@ -72,7 +72,7 @@ int invoke(MessageT *msg, struct table_t *table) {
                 result = 0;
             }
             msg->c_type = MESSAGE_T__C_TYPE__CT_VALUE;
-            msg->value.data = (uint8_t *) data;
+            msg->value.data = (uint8_t *) data->data;
             msg->value.len = (size_t) data->datasize;
             break;
         case MESSAGE_T__OPCODE__OP_DEL:
@@ -98,21 +98,27 @@ int invoke(MessageT *msg, struct table_t *table) {
             msg->c_type = MESSAGE_T__C_TYPE__CT_TABLE;
             msg->n_entries = (size_t) table->num_entries;
             int count = 0;
-            for (int i = 0; i < table->size; i++) {
+            for (int i = 0; i < table->size && table->lists[i] != NULL; i++) {
                 for (int j = 0; j < table->lists[i]->size; j++) {
                     struct entry_t *entry = table_get_n_entry(table->lists[i], j);
-
-                    EntryT *entry_message = malloc(sizeof(EntryT));
-                    if (entry_message == NULL) {
-                        free(entry_message);
-                        return -1;
+                    if (entry != NULL) {
+                        EntryT *entry_message = malloc(sizeof(EntryT));
+                        if (entry_message == NULL) {
+                            free(entry_message);
+                            return -1;
+                        }
+                        entry_t__init(entry_message);
+                        entry_message->key = entry->key;
+                        entry_message->value.data = (uint8_t *) entry->value->data;
+                        entry_message->value.len = (size_t) entry->value->datasize;
+                        if (count < msg->n_entries) {
+                            msg->entries[count] = entry_message;
+                            count++;
+                        } else {
+                            free(entry_message);
+                            return -1;
+                        }
                     }
-                    entry_t__init(entry_message);
-                    entry_message->key = entry->key;
-                    entry_message->value.data = (uint8_t *) entry->value->data;
-                    entry_message->value.len = (size_t) entry->value->datasize;
-                    msg->entries[count] = entry_message;
-                    count++;
                 }
             }
             break;
