@@ -66,7 +66,7 @@ int invoke(MessageT *msg, struct table_t *table) {
             struct data_t *new_data = data_create((int) msg->entry->value.len, n_data);
             if(new_data == NULL) {
                 printf("Error: Failed to create data.\n");
-                free(new_data);
+                data_destroy(new_data);
                 result = -1;
                 break;
             }

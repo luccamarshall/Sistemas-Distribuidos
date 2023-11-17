@@ -48,6 +48,7 @@ int main(int argc, char *argv[]) {
     
     if (network_connect(rtable) == -1) {
         fprintf(stderr, "Erro ao criar a ligação ao servidor\n");
+        free(rtable->server_address);
         free(rtable);
         exit(EXIT_FAILURE);
     }

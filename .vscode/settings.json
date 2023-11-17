@@ -5,6 +5,7 @@
     "table.h": "c",
     "entry.h": "c",
     "string.h": "c",
-    "client_stub.h": "c"
+    "client_stub.h": "c",
+    "sdmessage.pb-c.h": "c"
   }
 }

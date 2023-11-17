@@ -20,6 +20,10 @@ struct table_t *table_create(int n)
     table->lists = (struct list_t **)malloc(sizeof(struct entry_t *) * n);
     if (table->lists == NULL)
     {
+        for (int i = 0; i < table->size; i++)
+        {
+            list_destroy(table->lists[i]);
+        }
         free(table->lists);
         return NULL;
     }
@@ -28,7 +32,6 @@ struct table_t *table_create(int n)
     {
         table->lists[i] = list_create();
     }
-
     return table;
 }
 

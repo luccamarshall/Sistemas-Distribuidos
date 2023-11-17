@@ -7,7 +7,6 @@
 #include "client_stub-private.h"
 #include "message-private.h"
 #include "network_client.h"
-#include "free-private.h"
 
 struct rtable_t *rtable_connect(char *address_port) {
   
@@ -109,7 +108,7 @@ int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {
         return -1;
     }
     free(request);
-    free(response); 
+    free(response);
     free(entry_message);
 
     return 0;
@@ -200,19 +199,20 @@ int rtable_del(struct rtable_t *rtable, char *key) {
     MessageT *response = network_send_receive(rtable, request);
 
     if (response == NULL || response->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
-        fprintf(stderr, "Error in rtable_del or key not found!\n");
         free(request);
         free(response);
+        free(entry_message);
         return -1;
     } else if (response->opcode == MESSAGE_T__OPCODE__OP_DEL) {
         free(request);
         free(response);
+        free(entry_message);
         return 1;
     }
 
-    free_MessageT(request);
-    free_MessageT(response);
-    free_EntryT(entry_message);
+    free(request);
+    free(response);
+    free(entry_message);
 
     return 0;
 }
@@ -224,6 +224,7 @@ int rtable_size(struct rtable_t *rtable) {
     
     MessageT *request = malloc(sizeof(MessageT));
     if (request == NULL) {
+        // free(request);
         free(request);
         return -1;
     }
@@ -237,13 +238,17 @@ int rtable_size(struct rtable_t *rtable) {
 
     if (response == NULL || response->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
         fprintf(stderr, "rtable_size: response not valid\n");
-        free(request);
+        // free(request);
+        // free(response);
         free(response);
+        free(request);
         return -1;
     }
 
-    free(request);
+    // free(request);
+    // free(response);
     free(response);
+    free(request);
 
     return size;
 }
