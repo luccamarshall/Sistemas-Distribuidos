@@ -93,36 +93,6 @@ int main(int argc, char *argv[]) {
                     continue;
                 }
 
-                // // Create a MessageT structure and initialize it
-                // MessageT *message = malloc(sizeof(MessageT));
-                // if (message == NULL) {
-                //     free(message);
-                //     return -1;
-                // }
-                // message_t__init(message);
-
-                // // Populate the fields of the MessageT
-                // message->opcode = MESSAGE_T__OPCODE__OP_PUT;
-                // message->c_type = MESSAGE_T__C_TYPE__CT_ENTRY;
-                // message->key = key;
-
-                // // Create and populate the EntryT
-                // EntryT *entry_message = malloc(sizeof(EntryT));
-                // if (entry_message == NULL) {
-                //     free(entry_message);
-                //     return -1;
-                // }
-                // entry_t__init(entry_message);
-                // entry_message->key = key;
-
-                // // Create and populate the ProtobufCBinaryData
-                // ProtobufCBinaryData value_message;
-                // value_message.data = (uint8_t *)data->data;
-                // value_message.len = data->datasize;
-                
-                // entry_message->value = value_message;
-                // message->entry = entry_message;
-
                 if (rtable_put(rtable, entry) == 0) {
                         printf("Put operation succeeded.\n");
                     } else {

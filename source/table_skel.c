@@ -75,11 +75,11 @@ int invoke(MessageT *msg, struct table_t *table) {
         case MESSAGE_T__OPCODE__OP_GET:
             struct data_t *data = table_get(table, msg->key);
             if (data != NULL) {
+                msg->c_type = MESSAGE_T__C_TYPE__CT_VALUE;
+                msg->value.data = (uint8_t *) data->data;
+                msg->value.len = (size_t) data->datasize;
                 result = 0;
             }
-            msg->c_type = MESSAGE_T__C_TYPE__CT_VALUE;
-            msg->value.data = (uint8_t *) data->data;
-            msg->value.len = (size_t) data->datasize;
             break;
         case MESSAGE_T__OPCODE__OP_DEL:
             result = table_remove(table, msg->key);
@@ -132,6 +132,8 @@ int invoke(MessageT *msg, struct table_t *table) {
             }
             break;
         default:
+            printf("Deu quit :P\n");
+            result = 2;
             break;
     }
 
@@ -139,8 +141,11 @@ int invoke(MessageT *msg, struct table_t *table) {
         msg->opcode = MESSAGE_T__OPCODE__OP_ERROR;
         msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
         return -1;
+    } else if (result == 2) {
+        return 0;
     }
-    if (result == 0){
+
+    if (result == 0) {
         msg->opcode = msg->opcode+1;
     }
 
