@@ -7,6 +7,7 @@
 #include "client_stub-private.h"
 #include "message-private.h"
 #include "network_client.h"
+#include "free-private.h"
 
 struct rtable_t *rtable_connect(char *address_port) {
   
@@ -34,6 +35,7 @@ struct rtable_t *rtable_connect(char *address_port) {
     rtable->server_address = strdup(address);
     if (rtable->server_address == NULL) {
         perror("rtable_connect: strdup(server_address) failed");
+        free(rtable->server_address);
         free(rtable);
         return NULL;
     }
@@ -52,7 +54,6 @@ struct rtable_t *rtable_connect(char *address_port) {
 
     return rtable;
 }
-
 
 int rtable_disconnect(struct rtable_t *rtable) {
     if (rtable == NULL) {
@@ -209,9 +210,9 @@ int rtable_del(struct rtable_t *rtable, char *key) {
         return 1;
     }
 
-    free(request);
-    free(response);
-    free(entry_message);
+    free_MessageT(request);
+    free_MessageT(response);
+    free_EntryT(entry_message);
 
     return 0;
 }

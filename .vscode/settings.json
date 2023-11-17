@@ -4,6 +4,7 @@
     "stdlib.h": "c",
     "table.h": "c",
     "entry.h": "c",
-    "string.h": "c"
+    "string.h": "c",
+    "client_stub.h": "c"
   }
 }
