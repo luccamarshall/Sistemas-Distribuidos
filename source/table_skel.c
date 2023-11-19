@@ -4,9 +4,11 @@
 #include "table.h"
 #include "table-private.h"
 #include "network_client.h"
+#include "network_server.h"
 #include "message-private.h"
 #include "entry.h"
 #include "data.h"
+#include "stats.h"
 #include "table_skel-private.h"
 #include <stdlib.h>
 #include <string.h>
@@ -15,6 +17,9 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+
+
+extern struct statistics_t *stats;
 
 /* Inicia o skeleton da tabela.
  * O main() do servidor deve chamar esta função antes de poder usar a
@@ -54,13 +59,20 @@ int table_skel_destroy(struct table_t *table){
  * Retorna 0 (OK) ou -1 em caso de erro.
 */
 int invoke(MessageT *msg, struct table_t *table) {
-    if (msg == NULL || table == NULL) {
+    if (msg == NULL || table == NULL || stats == NULL) {
         return -1;
     }
 
     int result = -1;
 
     switch (msg->opcode) {
+        case MESSAGE_T__OPCODE__OP_STATS:
+            msg->c_type = MESSAGE_T__C_TYPE__CT_STATS;
+            msg->stats->total_operations = (int64_t) stats->total_operations;
+            msg->stats->total_time = (int64_t) stats->total_time;
+            msg->stats->connected_clients = (int32_t) stats->connected_clients;
+            result = 0;
+            break;
         case MESSAGE_T__OPCODE__OP_PUT:
             void *n_data = malloc(msg->entry->value.len);
             memcpy(n_data, msg->entry->value.data, msg->entry->value.len);

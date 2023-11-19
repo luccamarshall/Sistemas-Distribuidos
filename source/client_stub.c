@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include "stats.h"
 #include "client_stub.h"
 #include "client_stub-private.h"
 #include "message-private.h"
@@ -67,6 +68,40 @@ int rtable_disconnect(struct rtable_t *rtable) {
     free(rtable->server_address);
     free(rtable);
     return 0;
+}
+
+struct statistics_t *rtable_get_stats(struct rtable_t *rtable){
+    if (rtable == NULL) {
+        return NULL;
+    }
+
+    MessageT *request = malloc(sizeof(MessageT));
+    if (request == NULL) {
+        free(request);
+        return NULL;
+    }
+    message_t__init(request);
+    request->opcode = MESSAGE_T__OPCODE__OP_STATS;
+    request->c_type = MESSAGE_T__C_TYPE__CT_NONE;
+
+    MessageT *response = network_send_receive(rtable, request);
+
+    if (response == NULL || response->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
+        fprintf(stderr, "rtable_get_stats: response not valid\n");
+        free(request);
+        free(response);
+    }
+
+    struct statistics_t *stats = stats_init();
+    
+    stats->total_operations = (long) response->stats->total_operations;
+    stats->total_time = (long) response->stats->total_time;
+    stats->connected_clients = (int) response->stats->connected_clients;
+
+    free(request);
+    free(response);
+
+    return stats;
 }
 
 int rtable_put(struct rtable_t *rtable, struct entry_t *entry) {

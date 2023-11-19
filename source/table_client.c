@@ -7,6 +7,7 @@
 #include "client_stub.h"
 #include "data.h"
 #include "entry.h"
+#include "stats.h"
 #include "network_client.h"
 #include "sdmessage.pb-c.h"
 #include "client_stub-private.h"
@@ -58,14 +59,23 @@ int main(int argc, char *argv[]) {
         char command[256];
         printf("Insira um comando (put, get, del, size, getkeys, gettable ou quit): ");
         fgets(command, sizeof(command), stdin);
-        command[strlen(command) - 1] = '\0'; 
+        command[strlen(command) - 1] = '\0';
 
         char *token = strtok(command, " ");
         if (token == NULL) {
             continue; 
         }
         
-        if (strcmp(token, "quit") == 0) {
+        if (strcmp(token, "stats") == 0){
+            struct statistics_t *stats = rtable_get_stats(rtable);
+            if (stats != NULL) {
+                printf("total_operations: %ld\n", stats->total_operations);
+                printf("total_time: %ld\n", stats->total_time);
+                printf("connected_clients: %d\n", stats->connected_clients);
+            } else {
+                printf("Error in rtable_get_stats\n");
+            }
+        } else if (strcmp(token, "quit") == 0) {
             printf("Client is disconnecting and exiting.\n");
             rtable_disconnect(rtable);
             return 0;

@@ -21,6 +21,8 @@ struct rtable_t *rtable_connect(char *address_port);
  */
 int rtable_disconnect(struct rtable_t *rtable);
 
+struct statistics_t *rtable_get_stats(struct rtable_t *rtable);
+
 /* Função para adicionar um elemento na tabela.
  * Se a key já existe, vai substituir essa entrada pelos novos dados.
  * Retorna 0 (OK, em adição/substituição), ou -1 (erro).

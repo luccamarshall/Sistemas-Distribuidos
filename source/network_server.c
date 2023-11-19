@@ -20,6 +20,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+// Global variable declaration
+struct statistics_t *stats;
+
 /* Função para preparar um socket de receção de pedidos de ligação
  * num determinado porto.
  * Retorna o descritor do socket ou -1 em caso de erro.
@@ -152,7 +155,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
         return -1;
     }
 
-    struct statistics_t *stats = stats_init();
+    stats = stats_init();
     
     while (1) {
         // Accept connection
@@ -183,7 +186,7 @@ int network_main_loop(int listening_socket, struct table_t *table){
 
 void *handle_client(void *arg) {
     struct client_thread_args *args = (struct client_thread_args *)arg;
-    struct statistics_t *stats = args->stats; 
+    stats = args->stats; 
     int client_socket = args->client_socket;
     struct table_t *table = args->table;
 
