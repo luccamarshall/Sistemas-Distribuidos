@@ -4,6 +4,7 @@
 
 #include "list.h"
 #include "list-private.h"
+#include "table-private.h"
 
 struct table_t;
 
