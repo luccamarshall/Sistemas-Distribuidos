@@ -2,6 +2,7 @@
 #define NETWORK_SERVER_H
 
 #include "table.h"
+#include "sdmessage.pb-c.h"
 #include "message-private.h"
 
 // Structure for client thread arguments

@@ -1,3 +1,4 @@
+#include "network_server.h"
 #include "client_stub.h"
 #include "sdmessage.pb-c.h"
 #include "table.h"
@@ -179,32 +180,38 @@ void *handle_client(void *arg) {
     struct table_t *table = args->table;
 
     MessageT *msg = NULL;
+    int result = 1;
 
-    while(msg == NULL) {
-        msg = network_receive(client_socket);
+    while(result == 1) {
+        while(msg == NULL) {
+            msg = network_receive(client_socket);
+        }
+
+        // Invoke message
+        result = invoke(msg, table);
+
+        if (result == 2) {
+            close(client_socket);
+            free(args);
+            return NULL;
+        }
+
+        // Send message
+        result = network_send(client_socket, msg);
+        
+        if (result == -1) {
+            perror("network_main_loop: network_send failed");
+            close(client_socket);
+            free(args);
+            return NULL;
+        }
+
+        // Free message
+        message_t__free_unpacked(msg, NULL);
+        msg = NULL; // Reset msg so we can receive a new one in the next iteration
     }
 
-    // Invoke message
-    int result = invoke(msg, table);
-
-    if (result == 2) {
-        close(client_socket);
-        free(args);
-        pthread_exit(NULL);
-    }
-
-    // Send message
-    result = network_send(client_socket, msg);
-    
-    if (result == -1) {
-        perror("network_main_loop: network_send failed");
-        close(client_socket);
-        free(args);
-        pthread_exit(NULL);
-    }
-
-    // Free message
-    message_t__free_unpacked(msg, NULL);
+    return NULL;
 }
 
 /* Liberta os recursos alocados por network_server_init(), nomeadamente
