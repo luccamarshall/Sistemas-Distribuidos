@@ -4,11 +4,13 @@
 #include "table.h"
 #include "sdmessage.pb-c.h"
 #include "message-private.h"
+#include "stats.h"
 
 // Structure for client thread arguments
 struct client_thread_args {
     int client_socket;
     struct table_t *table;
+    struct statistics_t *stats;
 };
 
 /* Função para preparar um socket de receção de pedidos de ligação

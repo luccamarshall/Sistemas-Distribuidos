@@ -34,10 +34,10 @@ $(OBJ_DIR)/table_skel-private.o: $(SRC_DIR)/table_skel-private.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BIN_DIR)/table-client: $(OBJ_DIR)/table_client.o $(OBJ_DIR)/sdmessage.pb-c.o $(OBJ_DIR)/network_client.o $(OBJ_DIR)/client_stub.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table_skel-private.o $(OBJ_DIR)/table-private.o $(LIB_DIR)/libtable.a 
+$(BIN_DIR)/table-client: $(OBJ_DIR)/table_client.o $(OBJ_DIR)/sdmessage.pb-c.o $(OBJ_DIR)/network_client.o $(OBJ_DIR)/client_stub.o $(OBJ_DIR)/message.o $(OBJ_DIR)/table_skel-private.o $(OBJ_DIR)/table-private.o $(OBJ_DIR)/stats.o $(LIB_DIR)/libtable.a 
 	$(CC) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/table-server: $(OBJ_DIR)/table_server.o $(OBJ_DIR)/table_skel.o $(OBJ_DIR)/network_server.o $(OBJ_DIR)/message.o $(OBJ_DIR)/sdmessage.pb-c.o $(OBJ_DIR)/table_skel-private.o $(OBJ_DIR)/table-private.o $(LIB_DIR)/libtable.a
+$(BIN_DIR)/table-server: $(OBJ_DIR)/table_server.o $(OBJ_DIR)/table_skel.o $(OBJ_DIR)/network_server.o $(OBJ_DIR)/message.o $(OBJ_DIR)/sdmessage.pb-c.o $(OBJ_DIR)/table_skel-private.o $(OBJ_DIR)/table-private.o $(OBJ_DIR)/stats.o $(LIB_DIR)/libtable.a
 	$(CC) $^ -o $@ $(LDFLAGS)
 
 $(DEP_DIR):

@@ -2,6 +2,8 @@
 #include<stdlib.h>
 #include<string.h>
 
+#include "list-private.h"
+
 struct node_t
 {
     struct entry_t *entry;

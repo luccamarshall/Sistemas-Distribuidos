@@ -7,8 +7,10 @@
 #include "message-private.h"
 #include "entry.h"
 #include "data.h"
+#include "stats.h"
 #include "table_skel.h"
 
+#include <sys/time.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -149,9 +151,12 @@ int network_main_loop(int listening_socket, struct table_t *table){
     if (listening_socket < 0 || table == NULL) {
         return -1;
     }
+
+    struct statistics_t *stats = stats_init();
     
     while (1) {
         // Accept connection
+        // TODO IF THERE IS 0 CLIENTS CONNECTED print this:
         printf("Waiting for client connection...\n");
         int client_socket = accept(listening_socket, NULL, NULL);
 
@@ -160,12 +165,14 @@ int network_main_loop(int listening_socket, struct table_t *table){
             return -1;
         } else {
             printf("Client connected\n");
+            stats_update_clients(stats, 1);
         }
 
         // Create a new thread to handle the client's requests
         struct client_thread_args *args = malloc(sizeof(struct client_thread_args));
         args->client_socket = client_socket;
         args->table = table;
+        args->stats = stats;
         pthread_t thread;
         pthread_create(&thread, NULL, handle_client, args);
         pthread_detach(thread);
@@ -176,21 +183,38 @@ int network_main_loop(int listening_socket, struct table_t *table){
 
 void *handle_client(void *arg) {
     struct client_thread_args *args = (struct client_thread_args *)arg;
+    struct statistics_t *stats = args->stats; 
     int client_socket = args->client_socket;
     struct table_t *table = args->table;
 
     MessageT *msg = NULL;
     int result = 0;
 
+    struct timeval start, end;
+
     while(result == 0) {
         while(msg == NULL) {
             msg = network_receive(client_socket);
         }
 
+        // Start the timer
+        if (msg->opcode != MESSAGE_T__OPCODE__OP_STATS) {
+            gettimeofday(&start, NULL);
+        }
+
         // Invoke message
         result = invoke(msg, table);
 
+        // End the timer
+        if (msg->opcode != MESSAGE_T__OPCODE__OP_STATS+1) {
+            gettimeofday(&end, NULL);
+        }
+
+        // Calculate the time difference in microseconds
+        long time = (end.tv_sec - start.tv_sec) * 1e6 + (end.tv_usec - start.tv_usec);
+
         if (result == 2) {
+            stats_update_clients(stats, -1);
             close(client_socket);
             free(args);
             return NULL;
@@ -209,6 +233,10 @@ void *handle_client(void *arg) {
         // Free message
         message_t__free_unpacked(msg, NULL);
         msg = NULL; // Reset msg so we can receive a new one in the next iteration
+
+        // Update statistics
+        stats_update_operations(stats, 1, time);
+        time = 0;
     }
     return NULL;
 }

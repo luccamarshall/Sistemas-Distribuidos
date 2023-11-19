@@ -9,7 +9,6 @@
 #include "network_client.h"
 
 struct rtable_t *rtable_connect(char *address_port) {
-  
     if (address_port == NULL) {
         fprintf(stderr, "rtable_connect: Invalid argument\n");
         return NULL;
@@ -63,6 +62,7 @@ int rtable_disconnect(struct rtable_t *rtable) {
         perror("rtable_disconnect: network_close failed");
         return -1;
     }
+
 
     free(rtable->server_address);
     free(rtable);

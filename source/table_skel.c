@@ -1,5 +1,6 @@
 #include "client_stub.h"
 #include "sdmessage.pb-c.h"
+#include "table_skel.h"
 #include "table.h"
 #include "table-private.h"
 #include "network_client.h"
