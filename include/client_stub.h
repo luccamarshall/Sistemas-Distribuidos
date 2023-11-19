@@ -57,6 +57,9 @@ void rtable_free_keys(char **keys);
  */
 struct entry_t **rtable_get_table(struct rtable_t *rtable);
 
+/* Obtém as estatísticas do servidor. */
+struct statistics_t *rtable_stats(struct rtable_t *rtable);
+
 /* Liberta a memória alocada por rtable_get_table().
  */
 void rtable_free_entries(struct entry_t **entries);

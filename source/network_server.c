@@ -180,9 +180,9 @@ void *handle_client(void *arg) {
     struct table_t *table = args->table;
 
     MessageT *msg = NULL;
-    int result = 1;
+    int result = 0;
 
-    while(result == 1) {
+    while(result == 0) {
         while(msg == NULL) {
             msg = network_receive(client_socket);
         }
@@ -210,7 +210,6 @@ void *handle_client(void *arg) {
         message_t__free_unpacked(msg, NULL);
         msg = NULL; // Reset msg so we can receive a new one in the next iteration
     }
-
     return NULL;
 }
 
