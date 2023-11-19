@@ -9,10 +9,10 @@ message entry_t			/* Formato da mensagem EntryT */
 	bytes  value	= 2;
 }
 
-message stats_t			/* Formato da mensagem StatsT */
-{
-	string key		= 1;
-	bytes  value	= 2;
+message stats_t {
+    int64 total_operations = 1; // Total number of operations executed on the server's table
+    int64 total_time = 2; // Total accumulated time spent on executing operations on the table in microseconds
+    int32 connected_clients = 3; // Number of clients currently connected to the server
 }
 
 message message_t			/* Formato da mensagem MessageT */
