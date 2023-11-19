@@ -8,6 +8,7 @@
 #include "data.h"
 #include "table_skel.h"
 
+#include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -48,7 +49,6 @@ int network_server_init(short port){
 
     return sockfd;
 }
-
 
 /* A função network_receive() deve:
  * - Ler os bytes da rede, a partir do client_socket indicado;
@@ -149,52 +149,62 @@ int network_main_loop(int listening_socket, struct table_t *table){
         return -1;
     }
     
-    int LeBlock = 0;
-    int client_socket;
     while (1) {
         // Accept connection
-        if (LeBlock == 0) {
+        printf("Waiting for client connection...\n");
+        int client_socket = accept(listening_socket, NULL, NULL);
 
-            printf("Waiting for client connection...\n");
-            client_socket = accept(listening_socket, NULL, NULL);
-
-            if (client_socket < 0) {
-                perror("network_main_loop: accept failed");
-                return -1;
-            } else {
-                printf("Client connected\n");
-                LeBlock = 1;
-            }
-        }
-        MessageT *msg = NULL;
-
-        while(msg == NULL) {
-            msg = network_receive(client_socket);
-        }
-
-        // Invoke message
-        int result = invoke(msg, table);
-
-        if (result == 2) {
-            LeBlock = 0;
-            close(client_socket);
-            continue;
-        }
-
-        // Send message
-        result = network_send(client_socket, msg);
-        
-        if (result == -1) {
-            perror("network_main_loop: network_send failed");
-            close(client_socket);
+        if (client_socket < 0) {
+            perror("network_main_loop: accept failed");
             return -1;
+        } else {
+            printf("Client connected\n");
         }
 
-        // Free message
-        message_t__free_unpacked(msg, NULL);
+        // Create a new thread to handle the client's requests
+        struct client_thread_args *args = malloc(sizeof(struct client_thread_args));
+        args->client_socket = client_socket;
+        args->table = table;
+        pthread_t thread;
+        pthread_create(&thread, NULL, handle_client, args);
+        pthread_detach(thread);
     }
 
     return 0;
+}
+
+void *handle_client(void *arg) {
+    struct client_thread_args *args = (struct client_thread_args *)arg;
+    int client_socket = args->client_socket;
+    struct table_t *table = args->table;
+
+    MessageT *msg = NULL;
+
+    while(msg == NULL) {
+        msg = network_receive(client_socket);
+    }
+
+    // Invoke message
+    int result = invoke(msg, table);
+
+    if (result == 2) {
+        close(client_socket);
+        free(args);
+        pthread_exit(NULL);
+    }
+
+    // Send message
+    result = network_send(client_socket, msg);
+    
+    if (result == -1) {
+        perror("network_main_loop: network_send failed");
+        close(client_socket);
+        free(args);
+        pthread_exit(NULL);
+    }
+
+    // Free message
+    message_t__free_unpacked(msg, NULL);
 }
 
 /* Liberta os recursos alocados por network_server_init(), nomeadamente
