@@ -20,6 +20,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+pthread_cond_t cv;
+int ret;
+pthread_mutex_t lock;
+int num_readers, writing;
+
 // Global variable declaration
 struct statistics_t *stats;
 
@@ -34,6 +39,11 @@ int network_server_init(short port){
         perror("network_server_init: socket failed");
         return -1;
     }
+
+    pthread_mutex_init(&lock, NULL);
+    pthread_cond_init(&cv, NULL);
+    num_readers = 0;
+    writing = 0;
 
     // Bind socket
     struct sockaddr_in server_addr;
@@ -207,15 +217,39 @@ void *handle_client(void *arg) {
             gettimeofday(&start, NULL);
         }
 
+        // Lock the mutex
+        pthread_mutex_lock(&lock);
+
+        if (msg->opcode == MESSAGE_T__OPCODE__OP_PUT ||
+            msg->opcode == MESSAGE_T__OPCODE__OP_DEL) {
+            while(num_readers > 0) {
+                pthread_cond_wait(&cv, &lock);
+            }
+            writing = 1;
+        } else {
+            while(writing) {
+                pthread_cond_wait(&cv, &lock);
+            }
+            num_readers++;
+        }
+
         // Invoke message
         result = invoke(msg, table);
 
-        // End the timer
-        if (msg->opcode != MESSAGE_T__OPCODE__OP_STATS+1) {
-            gettimeofday(&end, NULL);
-            time = (end.tv_sec - start.tv_sec) * 1e6 + (end.tv_usec - start.tv_usec);
-            stats_update_operations(stats, 1, time);
+        if (msg->opcode == MESSAGE_T__OPCODE__OP_PUT ||
+            msg->opcode == MESSAGE_T__OPCODE__OP_DEL) {
+            writing = 0;
+            pthread_cond_broadcast(&cv);
+        } else {
+            num_readers--;
+            if (num_readers == 0) {
+                pthread_cond_signal(&cv);
+            }
         }
+
+        // Unlock the mutex
+        pthread_mutex_unlock(&lock);
+        
 
         if (result == 2) {
             printf("A client has disconnected\n");
@@ -223,6 +257,13 @@ void *handle_client(void *arg) {
             close(client_socket);
             free(args);
             return NULL;
+        }
+
+        // End the timer
+        if (msg->opcode != MESSAGE_T__OPCODE__OP_STATS+1) {
+            gettimeofday(&end, NULL);
+            time = (end.tv_sec - start.tv_sec) * 1e6 + (end.tv_usec - start.tv_usec);
+            stats_update_operations(stats, 1, time);
         }
         
         // Send message
@@ -252,6 +293,9 @@ int network_server_close(int socket){
     if (socket < 0) {
         return -1;
     }
+
+    pthread_mutex_destroy(&lock);
+    pthread_cond_destroy(&cv);
 
     if (close(socket) < 0) {
         perror("network_server_close: close socket failed");

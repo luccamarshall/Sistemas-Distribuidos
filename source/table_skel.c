@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <pthread.h>
 
 
 extern struct statistics_t *stats;
@@ -59,6 +60,7 @@ int table_skel_destroy(struct table_t *table){
  * Retorna 0 (OK) ou -1 em caso de erro.
 */
 int invoke(MessageT *msg, struct table_t *table) {
+
     if (msg == NULL || table == NULL || stats == NULL) {
         return -1;
     }
@@ -94,6 +96,7 @@ int invoke(MessageT *msg, struct table_t *table) {
             msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             break;
         case MESSAGE_T__OPCODE__OP_GET:
+            sleep(10);
             struct data_t *data = table_get(table, msg->key);
             if (data != NULL) {
                 msg->c_type = MESSAGE_T__C_TYPE__CT_VALUE;
