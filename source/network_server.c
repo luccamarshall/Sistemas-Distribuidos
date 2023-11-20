@@ -216,8 +216,6 @@ void *handle_client(void *arg) {
             stats_update_operations(stats, 1, time);
         }
 
-        printf("teste\n");
-
         if (result == 2) {
             stats_update_clients(stats, -1);
             close(client_socket);
@@ -227,7 +225,7 @@ void *handle_client(void *arg) {
         
         // Send message
         result = network_send(client_socket, msg);
-        printf("teste2\n");
+        
         if (result == -1) {
             perror("network_main_loop: network_send failed");
             close(client_socket);
