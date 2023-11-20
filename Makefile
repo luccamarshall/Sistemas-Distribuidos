@@ -9,8 +9,6 @@ CC = gcc
 CFLAGS = -g -Wall -I $(INC_DIR)
 LDFLAGS = -lprotobuf-c
 
-KEEP_OBJECTS = $(OBJ_DIR)/list.o $(OBJ_DIR)/table.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/data.o
-
 EXECS = proto $(BIN_DIR)/table-client $(BIN_DIR)/table-server
 
 all: libtable $(EXECS)
@@ -48,4 +46,4 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(DEP_DIR)/* $(filter-out $(KEEP_OBJECTS), $(wildcard $(OBJ_DIR)/*.o)) $(BIN_DIR)/* $(LIB_DIR)/* 
+	rm -rf $(DEP_DIR)/* $(OBJ_DIR)/* $(BIN_DIR)/* $(LIB_DIR)/*
