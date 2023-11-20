@@ -236,8 +236,7 @@ void *handle_client(void *arg) {
         }
 
         pthread_mutex_unlock(&lock);
-
-        // Invoke message
+        
         result = invoke(msg, table);
 
         pthread_mutex_lock(&lock);
@@ -279,11 +278,10 @@ void *handle_client(void *arg) {
             free(args);
             return NULL;
         }
-
+        
         // Free message
-        message_t__free_unpacked(msg, NULL);
+        // message_t__free_unpacked(msg, NULL); //está a dar double free()
         msg = NULL; // Reset msg so we can receive a new one in the next iteration
-
         // Update statistics
     }
     return NULL;

@@ -166,6 +166,7 @@ int invoke(MessageT *msg, struct table_t *table) {
             break;
         default:
             result = 2;
+            printf("Deu quitr :=\n");
             break;
     }
 
