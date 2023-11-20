@@ -159,15 +159,16 @@ int network_main_loop(int listening_socket, struct table_t *table){
     
     while (1) {
         // Accept connection
-        // TODO IF THERE IS 0 CLIENTS CONNECTED print this:
-        printf("Waiting for client connection...\n");
+        if(stats->connected_clients == 0){
+            printf("Waiting for a client to connect...\n");
+        }
         int client_socket = accept(listening_socket, NULL, NULL);
 
         if (client_socket < 0) {
             perror("network_main_loop: accept failed");
             return -1;
         } else {
-            printf("Client connected\n");
+            printf("A client has connected\n");
             stats_update_clients(stats, 1);
         }
 
@@ -217,6 +218,7 @@ void *handle_client(void *arg) {
         }
 
         if (result == 2) {
+            printf("A client has disconnected\n");
             stats_update_clients(stats, -1);
             close(client_socket);
             free(args);
