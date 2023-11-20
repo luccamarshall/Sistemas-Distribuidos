@@ -201,6 +201,7 @@ void *handle_client(void *arg) {
         }
 
         // Start the timer
+        long time = 0;
         if (msg->opcode != MESSAGE_T__OPCODE__OP_STATS) {
             gettimeofday(&start, NULL);
         }
@@ -211,10 +212,11 @@ void *handle_client(void *arg) {
         // End the timer
         if (msg->opcode != MESSAGE_T__OPCODE__OP_STATS+1) {
             gettimeofday(&end, NULL);
+            time = (end.tv_sec - start.tv_sec) * 1e6 + (end.tv_usec - start.tv_usec);
+            stats_update_operations(stats, 1, time);
         }
 
-        // Calculate the time difference in microseconds
-        long time = (end.tv_sec - start.tv_sec) * 1e6 + (end.tv_usec - start.tv_usec);
+        printf("teste\n");
 
         if (result == 2) {
             stats_update_clients(stats, -1);
@@ -225,7 +227,7 @@ void *handle_client(void *arg) {
 
         // Send message
         result = network_send(client_socket, msg);
-        
+        printf("teste2\n");
         if (result == -1) {
             perror("network_main_loop: network_send failed");
             close(client_socket);
@@ -238,8 +240,6 @@ void *handle_client(void *arg) {
         msg = NULL; // Reset msg so we can receive a new one in the next iteration
 
         // Update statistics
-        stats_update_operations(stats, 1, time);
-        time = 0;
     }
     return NULL;
 }
