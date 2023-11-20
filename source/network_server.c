@@ -254,7 +254,7 @@ void *handle_client(void *arg) {
 
         pthread_mutex_unlock(&lock);    
 
-        if (result == 2) {
+        if (result == -2) {
             printf("A client has disconnected\n");
             stats_update_clients(stats, -1);
             close(client_socket);
