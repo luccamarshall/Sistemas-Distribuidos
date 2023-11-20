@@ -10,8 +10,6 @@
 #include "stats.h"
 #include "table_skel.h"
 
-#include "threads.h"
-
 #include <sys/time.h>
 #include <pthread.h>
 #include <stdlib.h>
