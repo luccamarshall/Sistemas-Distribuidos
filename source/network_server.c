@@ -10,6 +10,8 @@
 #include "stats.h"
 #include "table_skel.h"
 
+#include "threads.h"
+
 #include <sys/time.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -44,7 +46,7 @@ int network_server_init(short port){
     pthread_cond_init(&cv, NULL);
     num_readers = 0;
     writing = 0;
-
+    
     // Bind socket
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
@@ -217,12 +219,12 @@ void *handle_client(void *arg) {
             gettimeofday(&start, NULL);
         }
 
-        // Lock the mutex
+
         pthread_mutex_lock(&lock);
 
         if (msg->opcode == MESSAGE_T__OPCODE__OP_PUT ||
             msg->opcode == MESSAGE_T__OPCODE__OP_DEL) {
-            while(num_readers > 0) {
+            while(num_readers > 0 || writing) {
                 pthread_cond_wait(&cv, &lock);
             }
             writing = 1;
@@ -233,11 +235,15 @@ void *handle_client(void *arg) {
             num_readers++;
         }
 
+        pthread_mutex_unlock(&lock);
+
         // Invoke message
         result = invoke(msg, table);
 
-        if (msg->opcode == MESSAGE_T__OPCODE__OP_PUT ||
-            msg->opcode == MESSAGE_T__OPCODE__OP_DEL) {
+        pthread_mutex_lock(&lock);
+
+        if (msg->opcode == MESSAGE_T__OPCODE__OP_PUT+1 ||
+            msg->opcode == MESSAGE_T__OPCODE__OP_DEL+1) {
             writing = 0;
             pthread_cond_broadcast(&cv);
         } else {
@@ -247,9 +253,7 @@ void *handle_client(void *arg) {
             }
         }
 
-        // Unlock the mutex
-        pthread_mutex_unlock(&lock);
-        
+        pthread_mutex_unlock(&lock);    
 
         if (result == 2) {
             printf("A client has disconnected\n");
