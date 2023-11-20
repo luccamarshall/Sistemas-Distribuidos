@@ -224,7 +224,7 @@ void *handle_client(void *arg) {
             free(args);
             return NULL;
         }
-
+        
         // Send message
         result = network_send(client_socket, msg);
         printf("teste2\n");

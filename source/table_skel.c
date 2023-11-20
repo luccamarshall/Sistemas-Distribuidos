@@ -73,18 +73,10 @@ int invoke(MessageT *msg, struct table_t *table) {
             if (msg->stats == NULL) {
                 return -1;
             }
-            StatsT *stats_new = malloc(sizeof(StatsT));
-            stats_t__init(stats_new);
-            stats_new->total_operations = (int64_t) stats->total_operations;
-            stats_new->total_time = (int64_t) stats->total_time;
-            stats_new->connected_clients = (int32_t) stats->connected_clients;
-
-            msg->stats->total_operations = stats_new->total_operations;
-            msg->stats->total_time = stats_new->total_time;
-            msg->stats->connected_clients = stats_new->connected_clients;
-
-            // Free stats_new after copying its values
-            free(stats_new);
+            stats_t__init(msg->stats);
+            msg->stats->total_operations = (int64_t) stats->total_operations;
+            msg->stats->total_time = (int64_t) stats->total_time;
+            msg->stats->connected_clients = (int32_t) stats->connected_clients;
 
             result = 0;
             break;
