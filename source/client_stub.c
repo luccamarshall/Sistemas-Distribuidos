@@ -86,17 +86,30 @@ struct statistics_t *rtable_get_stats(struct rtable_t *rtable){
 
     MessageT *response = network_send_receive(rtable, request);
 
+    
+    printf("1resdsadsdsa\n");
+    printf("opcode: %d\n", response->opcode);
+    // //debug stats
+    // printf("stats->total_operations: %ld\n", (long) response->stats->total_operations);
+    // printf("stats->total_time: %ld\n", (long) response->stats->total_time);
+    // printf("stats->connected_clients: %d\n", (int) response->stats->connected_clients);
+
     if (response == NULL || response->opcode == MESSAGE_T__OPCODE__OP_ERROR) {
         fprintf(stderr, "rtable_get_stats: response not valid\n");
         free(request);
         free(response);
+        return NULL;
     }
+
+    printf("2resdsadsdsa\n");
 
     struct statistics_t *stats = stats_init();
     
     stats->total_operations = (long) response->stats->total_operations;
     stats->total_time = (long) response->stats->total_time;
     stats->connected_clients = (int) response->stats->connected_clients;
+
+    printf("3resdsadsdsa\n");
 
     free(request);
     free(response);

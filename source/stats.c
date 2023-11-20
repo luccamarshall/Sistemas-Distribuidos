@@ -27,8 +27,8 @@ void stats_update_operations(struct statistics_t *stats, long operations, long t
     stats->total_operations += operations;
     stats->total_time += time;
 
-    printf("stats->total_operations: %ld\n", stats->total_operations);
-    printf("stats->total_time: %ld\n", stats->total_time);
+    // printf("stats->total_operations: %ld\n", stats->total_operations);
+    // printf("stats->total_time: %ld\n", stats->total_time);
 }
 
 void stats_update_clients(struct statistics_t *stats, int clients) {
@@ -37,7 +37,7 @@ void stats_update_clients(struct statistics_t *stats, int clients) {
     }
 
     stats->connected_clients += clients;
-    printf("stats->connected_clients: %d\n", stats->connected_clients);
+    // printf("stats->connected_clients: %d\n", stats->connected_clients);
 }
 
 struct statistics_t *stats_get(struct statistics_t *stats) {

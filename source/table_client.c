@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
     // Loop principal para aceitar comandos do usuário
     while (1) {
         char command[256];
-        printf("Insira um comando (put, get, del, size, getkeys, gettable ou quit): ");
+        printf("Insira um comando (put, get, del, size, getkeys, gettable, stats ou quit): ");
         fgets(command, sizeof(command), stdin);
         command[strlen(command) - 1] = '\0';
 
