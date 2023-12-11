@@ -21,6 +21,10 @@
 #include <sys/socket.h>
 #include <pthread.h>
 
+extern struct statistics_t *stats;
+
+zhandle_t *zh;
+
 void zookeeper_watcher(zhandle_t *zh, int type, int state, const char *path, void *watcher_ctx)
 {
     // Handle ZooKeeper events, if necessary
@@ -61,9 +65,156 @@ void zookeeper_watcher(zhandle_t *zh, int type, int state, const char *path, voi
     }
 }
 
-extern struct statistics_t *stats;
+zhandle_t *connect_zookeeper(const char *zk_address)
+{
+    zoo_set_debug_level(ZOO_LOG_LEVEL_WARN);
+    zh = zookeeper_init(zk_address, zookeeper_watcher, 10000, 0, NULL, 0);
+    if (zh == NULL)
+    {
+        fprintf(stderr, "Error initializing ZooKeeper client.\n");
+        exit(EXIT_FAILURE);
+    }
+    return zh;
+}
 
-zhandle_t *zh;
+void watch_children(zhandle_t *zzh, int type, int state, const char *path, void *watcherCtx)
+{
+    // Handle ZooKeeper events, if necessary
+    if (type == ZOO_SESSION_EVENT)
+    {
+        if (state == ZOO_CONNECTED_STATE)
+        {
+            printf("Connected to ZooKeeper.\n");
+        }
+        else if (state == ZOO_EXPIRED_SESSION_STATE)
+        {
+            printf("Session expired.\n");
+        }
+    }
+    else if (type == ZOO_CREATED_EVENT)
+    {
+        printf("Node created: %s\n", path);
+    }
+    else if (type == ZOO_DELETED_EVENT)
+    {
+        printf("Node removed: %s\n", path);
+    }
+    else if (type == ZOO_CHANGED_EVENT)
+    {
+        printf("Node changed: %s\n", path);
+    }
+    else if (type == ZOO_CHILD_EVENT)
+    {
+        printf("Child node changed: %s\n", path);
+    }
+    else if (type == ZOO_NOTWATCHING_EVENT)
+    {
+        printf("No longer watching: %s\n", path);
+    }
+    else
+    {
+        printf("Unknown event: %d\n", type);
+    }
+
+    // Get and watch the children of /chain
+    struct String_vector children;
+    int rc = zoo_awget_children(zh, "/chain", watch_children, NULL, &children, NULL);
+
+    // Check if getting children was successful
+    if (rc != ZOK)
+    {
+        fprintf(stderr, "Error getting children of /chain: %s\n", zerror(rc));
+        exit(EXIT_FAILURE);
+    }
+
+    // Handle successor and predecessor nodes
+    handle_successor_predecessor(&children, (char *)watcherCtx);
+}
+
+void handle_successor_predecessor(struct String_vector *children, char *znode_id)
+{
+    // Sort the children
+    sort_children(children);
+
+    // Find the position of this node
+    int position = find_position(children, znode_id);
+
+    // Get the id of the predecessor node
+    char *predecessor_id = NULL;
+    if (position == 0)
+    {
+        predecessor_id = strdup(children->data[children->count - 1]);
+    }
+    else
+    {
+        predecessor_id = strdup(children->data[position - 1]);
+    }
+
+    // Get the id of the successor node
+    char *successor_id = NULL;
+    if (position == children->count - 1)
+    {
+        successor_id = strdup(children->data[0]);
+    }
+    else
+    {
+        successor_id = strdup(children->data[position + 1]);
+    }
+
+    // Connect to the predecessor node
+    connect_predecessor(predecessor_id);
+
+    // Connect to the successor node
+    connect_successor(successor_id);
+}
+
+void sort_children(struct String_vector *children)
+{
+    int i, j;
+    for (i = 0; i < children->count - 1; i++)
+    {
+        for (j = 0; j < children->count - i - 1; j++)
+        {
+            if (strcmp(children->data[j], children->data[j + 1]) > 0)
+            {
+                char *temp = children->data[j];
+                children->data[j] = children->data[j + 1];
+                children->data[j + 1] = temp;
+            }
+        }
+    }
+}
+
+int find_position(struct String_vector *children, char *znode_id)
+{
+    int i;
+    for (i = 0; i < children->count; i++)
+    {
+        if (strcmp(children->data[i], znode_id) == 0)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void connect_successor(char *successor_id)
+{
+    // Parse the successor_id to get the address and port
+    char *address = strtok(successor_id, ":");
+    int port = atoi(strtok(NULL, ":"));
+
+    // Connect to the successor server
+    struct rtable_t *successor_rtable = rtable_connect(address);
+    if (successor_rtable == NULL)
+    {
+        fprintf(stderr, "Error connecting to successor server.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Update the successor_rtable global variable
+    successor_rtable = successor_rtable;
+}
 
 struct table_t *table_skel_init(int n_lists, const char *zk_address)
 {
