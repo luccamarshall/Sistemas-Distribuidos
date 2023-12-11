@@ -5,21 +5,23 @@
 #include <zookeeper/zookeeper.h>
 #include "sdmessage.pb-c.h"
 
-void zookeeper_watcher(zhandle_t *zh, int type, int state, const char *path, void *watcher_ctx);
-
-zhandle_t *connect_zookeeper(const char *zk_address);
-
-void watch_children(zhandle_t *zzh, int type, int state, const char *path, void *watcherCtx);
-
-void my_completion(int rc, const struct String_vector *strings, const void *data);
-
-void handle_successor_predecessor(struct String_vector *children, char *znode_id);
+void sort_children(struct String_vector *children);
 
 int find_position(struct String_vector *children, char *znode_id);
 
 void connect_predecessor(char *predecessor_id);
 
 void connect_successor(char *successor_id);
+
+void zookeeper_watcher(zhandle_t *zh, int type, int state, const char *path, void *watcher_ctx);
+
+zhandle_t *connect_zookeeper(const char *zk_address);
+
+void my_completion(int rc, const struct String_vector *strings, const void *data);
+
+void watch_children(zhandle_t *zzh, int type, int state, const char *path, void *watcherCtx);
+
+void handle_successor_predecessor(struct String_vector *children, char *znode_id);
 
 /* Inicia o skeleton da tabela.
  * O main() do servidor deve chamar esta função antes de poder usar a
