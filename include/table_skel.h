@@ -2,6 +2,7 @@
 #define _TABLE_SKEL_H
 
 #include "table.h"
+#include <zookeeper/zookeeper.h>
 #include "sdmessage.pb-c.h"
 
 void zookeeper_watcher(zhandle_t *zh, int type, int state, const char *path, void *watcher_ctx);
@@ -11,7 +12,6 @@ zhandle_t *connect_zookeeper(const char *zk_address);
 void watch_children(zhandle_t *zzh, int type, int state, const char *path, void *watcherCtx);
 
 void handle_successor_predecessor(struct String_vector *children, char *znode_id);
-
 
 int find_position(struct String_vector *children, char *znode_id);
 

@@ -4,11 +4,13 @@ LIB_DIR = lib
 OBJ_DIR = object
 SRC_DIR = source
 DEP_DIR = dependencies
+ZK_INCLUDE = /path/to/zookeeper/include
+ZK_LIB = /path/to/zookeeper/lib
 ZKFLAGS = -lzookeeper_mt
 
 CC = gcc
-CFLAGS = -g -Wall -I $(INC_DIR)
-LDFLAGS = -lprotobuf-c
+CFLAGS = -g -Wall -I $(INC_DIR) -I $(ZK_INCLUDE)
+LDFLAGS = -lprotobuf-c -L $(ZK_LIB) -lzookeeper_mt
 
 KEEP_OBJECTS = $(OBJ_DIR)/list.o $(OBJ_DIR)/table.o $(OBJ_DIR)/entry.o $(OBJ_DIR)/data.o
 

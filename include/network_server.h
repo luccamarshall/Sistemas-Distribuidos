@@ -3,6 +3,7 @@
 
 #include "table.h"
 #include "sdmessage.pb-c.h"
+#include <zookeeper/zookeeper.h>
 #include "message-private.h"
 #include "stats.h"
 

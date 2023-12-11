@@ -21,13 +21,6 @@
 #include <sys/socket.h>
 #include <pthread.h>
 
-// Add missing import statements
-#include "table-private.h"
-#include "table_skel-private.h"
-#include "table_skel.h"
-#include "table.h"
-#include "rtable.h"
-
 extern struct statistics_t *stats;
 
 zhandle_t *zh;
@@ -125,7 +118,13 @@ void watch_children(zhandle_t *zzh, int type, int state, const char *path, void 
 
     // Get and watch the children of /chain
     struct String_vector children;
-    int rc = zoo_awget_children(zh, "/chain", watch_children, NULL, &children);
+    int rc = zoo_awget_children(zh, "/chain", watch_children, NULL, &children, NULL);
+void handle_successor_predecessor(struct String_vector *children, char *znode_id);
+void sort_children(struct String_vector *children);
+int find_position(struct String_vector *children, char *znode_id);
+const char *zerror(int rc);
+
+// Rest of the code...
 
     // Check if getting children was successful
     if (rc != ZOK)
