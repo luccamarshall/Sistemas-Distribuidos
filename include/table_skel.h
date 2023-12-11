@@ -11,9 +11,13 @@ zhandle_t *connect_zookeeper(const char *zk_address);
 
 void watch_children(zhandle_t *zzh, int type, int state, const char *path, void *watcherCtx);
 
+void my_completion(int rc, const struct String_vector *strings, const void *data);
+
 void handle_successor_predecessor(struct String_vector *children, char *znode_id);
 
 int find_position(struct String_vector *children, char *znode_id);
+
+void connect_predecessor(char *predecessor_id);
 
 void connect_successor(char *successor_id);
 
@@ -23,7 +27,7 @@ void connect_successor(char *successor_id);
  * serem usadas pela tabela mantida no servidor.
  * Retorna a tabela criada ou NULL em caso de erro.
  */
-struct table_t *table_skel_init(int n_lists);
+struct table_t *table_skel_init(int n_lists, const char *zk_address);
 
 /* Liberta toda a memória ocupada pela tabela e todos os recursos 
  * e outros recursos usados pelo skeleton.

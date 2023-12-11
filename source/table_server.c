@@ -16,16 +16,17 @@
 #include <sys/socket.h>
 
 int main(int argc, char *argv[]) {
-        if (argc != 3) {
+        if (argc != 4) {
         fprintf(stderr, "Uso: %s <IP>:<porto> <porto> <num_lists>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
 
-    short port = atoi(argv[2]);
-    int num_lists = atoi(argv[3]);
+    short port = atoi(argv[1]);
+    int num_lists = atoi(argv[2]);
+    char *zk = argv[3];
 
     // Inicialize a tabela
-    struct table_t *table = table_skel_init(num_lists); 
+    struct table_t *table = table_skel_init(num_lists, zk); 
 
     if (table == NULL) {
         fprintf(stderr, "Erro ao criar a tabela.\n");

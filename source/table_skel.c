@@ -20,10 +20,65 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <pthread.h>
+#include <netinet/in.h>
 
 extern struct statistics_t *stats;
 
 zhandle_t *zh;
+
+void sort_children(struct String_vector *children)
+{
+    int i, j;
+    for (i = 0; i < children->count - 1; i++)
+    {
+        for (j = 0; j < children->count - i - 1; j++)
+        {
+            if (strcmp(children->data[j], children->data[j + 1]) > 0)
+            {
+                char *temp = children->data[j];
+                children->data[j] = children->data[j + 1];
+                children->data[j + 1] = temp;
+            }
+        }
+    }
+}
+
+int find_position(struct String_vector *children, char *znode_id)
+{
+    int i;
+    for (i = 0; i < children->count; i++)
+    {
+        if (strcmp(children->data[i], znode_id) == 0)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void connect_predecessor(char *predecessor_id) {
+    // Connect to the predecessor server
+    struct rtable_t *predecessor_rtable = rtable_connect(predecessor_id);
+    if (predecessor_rtable == NULL)
+    {
+        fprintf(stderr, "Error connecting to predecessor server.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    predecessor_rtable = predecessor_rtable;
+}
+
+void connect_successor(char *successor_id) {
+    // Connect to the successor server
+    struct rtable_t *successor_rtable = rtable_connect(successor_id);
+    if (successor_rtable == NULL)
+    {
+        fprintf(stderr, "Error connecting to successor server.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    successor_rtable = successor_rtable;
+}
 
 void zookeeper_watcher(zhandle_t *zh, int type, int state, const char *path, void *watcher_ctx)
 {
@@ -77,6 +132,18 @@ zhandle_t *connect_zookeeper(const char *zk_address)
     return zh;
 }
 
+void my_completion(int rc, const struct String_vector *strings, const void *data) {
+    if (rc != ZOK) {
+        fprintf(stderr, "Error %d for zoo_awget_children.\n", rc);
+        return;
+    }
+
+    printf("Children of /chain node:\n");
+    for (int i = 0; i < strings->count; i++) {
+        printf("%s\n", strings->data[i]);
+    }
+}
+
 void watch_children(zhandle_t *zzh, int type, int state, const char *path, void *watcherCtx)
 {
     // Handle ZooKeeper events, if necessary
@@ -118,13 +185,9 @@ void watch_children(zhandle_t *zzh, int type, int state, const char *path, void 
 
     // Get and watch the children of /chain
     struct String_vector children;
-    int rc = zoo_awget_children(zh, "/chain", watch_children, NULL, &children, NULL);
-void handle_successor_predecessor(struct String_vector *children, char *znode_id);
-void sort_children(struct String_vector *children);
-int find_position(struct String_vector *children, char *znode_id);
-const char *zerror(int rc);
-
-// Rest of the code...
+    int rc = zoo_awget_children(zh, "/chain", watch_children, NULL, my_completion, NULL);
+    
+    const char *zerror(int rc);
 
     // Check if getting children was successful
     if (rc != ZOK)
@@ -174,53 +237,7 @@ void handle_successor_predecessor(struct String_vector *children, char *znode_id
     connect_successor(successor_id);
 }
 
-void sort_children(struct String_vector *children)
-{
-    int i, j;
-    for (i = 0; i < children->count - 1; i++)
-    {
-        for (j = 0; j < children->count - i - 1; j++)
-        {
-            if (strcmp(children->data[j], children->data[j + 1]) > 0)
-            {
-                char *temp = children->data[j];
-                children->data[j] = children->data[j + 1];
-                children->data[j + 1] = temp;
-            }
-        }
-    }
-}
 
-int find_position(struct String_vector *children, char *znode_id)
-{
-    int i;
-    for (i = 0; i < children->count; i++)
-    {
-        if (strcmp(children->data[i], znode_id) == 0)
-        {
-            return i;
-        }
-    }
-    return -1;
-}
-
-void connect_successor(char *successor_id)
-{
-    // Parse the successor_id to get the address and port
-    char *address = strtok(successor_id, ":");
-    int port = atoi(strtok(NULL, ":"));
-
-    // Connect to the successor server
-    struct rtable_t *successor_rtable = rtable_connect(address);
-    if (successor_rtable == NULL)
-    {
-        fprintf(stderr, "Error connecting to successor server.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    // Update the successor_rtable global variable
-    successor_rtable = successor_rtable;
-}
 
 struct table_t *table_skel_init(int n_lists, const char *zk_address)
 {
@@ -361,7 +378,7 @@ int invoke(MessageT *msg, struct table_t *table) {
                             msg->entries[count] = entry_message;
                             count++;
                         } else {
-                            entry_t__destroy(entry_message);
+                            entry_destroy(entry);
                             result = -1;
                             break;
                         }
