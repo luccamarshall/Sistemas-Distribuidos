@@ -82,6 +82,7 @@ int invoke(MessageT *msg, struct table_t *table) {
             result = 0;
             break;
         case MESSAGE_T__OPCODE__OP_PUT:
+            // sleep(5);
             void *n_data = malloc(msg->entry->value.len);
             memcpy(n_data, msg->entry->value.data, msg->entry->value.len);
             struct data_t *new_data = data_create((int) msg->entry->value.len, n_data);
@@ -113,6 +114,7 @@ int invoke(MessageT *msg, struct table_t *table) {
             msg->result = (int32_t) result;
             break;
         case MESSAGE_T__OPCODE__OP_GETKEYS:
+            // sleep(5);
             char **keys = table_get_keys(table);
             int n_keys = table_size(table);
             if (keys != NULL) {
