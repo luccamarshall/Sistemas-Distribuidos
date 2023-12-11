@@ -21,6 +21,13 @@
 #include <sys/socket.h>
 #include <pthread.h>
 
+// Add missing import statements
+#include "table-private.h"
+#include "table_skel-private.h"
+#include "table_skel.h"
+#include "table.h"
+#include "rtable.h"
+
 extern struct statistics_t *stats;
 
 zhandle_t *zh;
