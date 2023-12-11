@@ -7,9 +7,6 @@ struct rtable_t {
     char *server_address;
     int server_port;
     int sockfd;
-    int successor_sockfd;
-    char *successor_address;
-    int successor_node_id;
 };
 
 #endif

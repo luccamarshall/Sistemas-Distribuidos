@@ -23,7 +23,7 @@
 
 pthread_cond_t cv;
 int ret;
-pthread_mutex_t write_lock;
+pthread_mutex_t lock;
 int num_readers, writing;
 
 // Global variable declaration
@@ -219,72 +219,39 @@ void *handle_client(void *arg) {
         }
 
 
-        // pthread_mutex_lock(&lock);
-
-        // if (msg->opcode == MESSAGE_T__OPCODE__OP_PUT ||
-        //     msg->opcode == MESSAGE_T__OPCODE__OP_DEL) {
-        //     while(num_readers > 0 || writing) {
-        //         pthread_cond_wait(&cv, &lock);
-        //     }
-        //     writing = 1;
-        // } else {
-        //     while(writing) {
-        //         pthread_cond_wait(&cv, &lock);
-        //     }
-        //     num_readers++;
-        // }
-
-        // pthread_mutex_unlock(&lock);
-        
-        // result = invoke(msg, table);
-
-        // pthread_mutex_lock(&lock);
-
-        // if (msg->opcode == MESSAGE_T__OPCODE__OP_PUT+1 ||
-        //     msg->opcode == MESSAGE_T__OPCODE__OP_DEL+1) {
-        //     writing = 0;
-        //     pthread_cond_broadcast(&cv);
-        // } else {
-        //     num_readers--;
-        //     if (num_readers == 0) {
-        //         pthread_cond_signal(&cv);
-        //     }
-        // }
-
-        // pthread_mutex_unlock(&lock);
+        pthread_mutex_lock(&lock);
 
         if (msg->opcode == MESSAGE_T__OPCODE__OP_PUT ||
             msg->opcode == MESSAGE_T__OPCODE__OP_DEL) {
-            // Lock the mutex before performing the write operations
-            pthread_mutex_lock(&write_lock);
-
-            // Perform the local write operation
-            result = invoke(msg, table);
-
-            // Perform the remote write operation
-            if (successor_rtable != NULL) {
-                if (msg->opcode == MESSAGE_T__OPCODE__OP_PUT) {
-                    struct entry_t *entry = // Create entry from msg
-                    int result = rtable_put(successor_rtable, entry);
-                    if (result == -1) {
-                        fprintf(stderr, "Error replicating put operation on successor server.\n");
-                    }
-                } else if (msg->opcode == MESSAGE_T__OPCODE__OP_DEL) {
-                    char *key = // Get key from msg
-                    int result = rtable_del(successor_rtable, key);
-                    if (result == -1) {
-                        fprintf(stderr, "Error replicating del operation on successor server.\n");
-                    }
-                }
+            while(num_readers > 0 || writing) {
+                pthread_cond_wait(&cv, &lock);
             }
-
-            // Unlock the mutex after the write operations
-            pthread_mutex_unlock(&write_lock);
+            writing = 1;
         } else {
-            // Perform the read operation
-            result = invoke(msg, table);
+            while(writing) {
+                pthread_cond_wait(&cv, &lock);
+            }
+            num_readers++;
         }
-            
+
+        pthread_mutex_unlock(&lock);
+        
+        result = invoke(msg, table);
+
+        pthread_mutex_lock(&lock);
+
+        if (msg->opcode == MESSAGE_T__OPCODE__OP_PUT+1 ||
+            msg->opcode == MESSAGE_T__OPCODE__OP_DEL+1) {
+            writing = 0;
+            pthread_cond_broadcast(&cv);
+        } else {
+            num_readers--;
+            if (num_readers == 0) {
+                pthread_cond_signal(&cv);
+            }
+        }
+
+        pthread_mutex_unlock(&lock);
 
         if (result == -2) {
             printf("A client has disconnected\n");
