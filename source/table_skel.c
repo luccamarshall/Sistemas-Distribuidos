@@ -118,7 +118,7 @@ void watch_children(zhandle_t *zzh, int type, int state, const char *path, void 
 
     // Get and watch the children of /chain
     struct String_vector children;
-    int rc = zoo_awget_children(zh, "/chain", watch_children, NULL, &children, NULL);
+    int rc = zoo_awget_children(zh, "/chain", watch_children, NULL, &children);
 
     // Check if getting children was successful
     if (rc != ZOK)
@@ -294,13 +294,15 @@ int invoke(MessageT *msg, struct table_t *table) {
                 break;
             }
             result = table_put(table, msg->entry->key, new_data);
+            data_destroy(new_data);
             msg->c_type = MESSAGE_T__C_TYPE__CT_NONE;
             break;
         case MESSAGE_T__OPCODE__OP_GET:
             struct data_t *data = table_get(table, msg->key);
             if (data != NULL) {
                 msg->c_type = MESSAGE_T__C_TYPE__CT_VALUE;
-                msg->value.data = (uint8_t *) data->data;
+                msg->value.data = malloc(data->datasize);
+                memcpy(msg->value.data, data->data, data->datasize);
                 msg->value.len = (size_t) data->datasize;
                 result = 0;
             }
@@ -353,7 +355,7 @@ int invoke(MessageT *msg, struct table_t *table) {
                             msg->entries[count] = entry_message;
                             count++;
                         } else {
-                            free(entry_message);
+                            entry_t__destroy(entry_message);
                             result = -1;
                             break;
                         }
