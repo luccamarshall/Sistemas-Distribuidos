@@ -10,6 +10,8 @@
 #include "data.h"
 #include "stats.h"
 #include "table_skel-private.h"
+
+#include <zookeeper/zookeeper.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -19,22 +21,70 @@
 #include <sys/socket.h>
 #include <pthread.h>
 
+void zookeeper_watcher(zhandle_t *zh, int type, int state, const char *path, void *watcher_ctx)
+{
+    // Handle ZooKeeper events, if necessary
+    if (type == ZOO_SESSION_EVENT)
+    {
+        if (state == ZOO_CONNECTED_STATE)
+        {
+            printf("Connected to ZooKeeper.\n");
+        }
+        else if (state == ZOO_EXPIRED_SESSION_STATE)
+        {
+            printf("Session expired.\n");
+        }
+    }
+    else if (type == ZOO_CREATED_EVENT)
+    {
+        printf("Node created: %s\n", path);
+    }
+    else if (type == ZOO_DELETED_EVENT)
+    {
+        printf("Node removed: %s\n", path);
+    }
+    else if (type == ZOO_CHANGED_EVENT)
+    {
+        printf("Node changed: %s\n", path);
+    }
+    else if (type == ZOO_CHILD_EVENT)
+    {
+        printf("Child node changed: %s\n", path);
+    }
+    else if (type == ZOO_NOTWATCHING_EVENT)
+    {
+        printf("No longer watching: %s\n", path);
+    }
+    else
+    {
+        printf("Unknown event: %d\n", type);
+    }
+}
 
 extern struct statistics_t *stats;
 
-/* Inicia o skeleton da tabela.
- * O main() do servidor deve chamar esta função antes de poder usar a
- * função invoke(). O parâmetro n_lists define o número de listas a
- * serem usadas pela tabela mantida no servidor.
- * Retorna a tabela criada ou NULL em caso de erro.
- */
-struct table_t *table_skel_init(int n_lists){
-    if (n_lists <= 0) {
+zhandle_t *zh;
+
+struct table_t *table_skel_init(int n_lists, const char *zk_address)
+{
+    if (n_lists <= 0 || zk_address == NULL)
+    {
         return NULL;
     }
 
     struct table_t *table = table_create(n_lists);
-    if (table == NULL) {
+    if (table == NULL)
+    {
+        return NULL;
+    }
+
+    // Initialize the ZooKeeper client
+    zoo_set_debug_level(ZOO_LOG_LEVEL_WARN);
+    zh = zookeeper_init(zk_address, zookeeper_watcher, 10000, 0, NULL, 0);
+    if (zh == NULL)
+    {
+        fprintf(stderr, "Error initializing ZooKeeper client.\n");
+        table_destroy(table);
         return NULL;
     }
 
