@@ -1,4 +1,3 @@
-@@ -1,51 +1,49 @@
 BIN_DIR = binary
 INC_DIR = include
 LIB_DIR = lib

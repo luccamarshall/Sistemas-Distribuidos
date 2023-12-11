@@ -4,6 +4,19 @@
 #include "table.h"
 #include "sdmessage.pb-c.h"
 
+void zookeeper_watcher(zhandle_t *zh, int type, int state, const char *path, void *watcher_ctx);
+
+zhandle_t *connect_zookeeper(const char *zk_address);
+
+void watch_children(zhandle_t *zzh, int type, int state, const char *path, void *watcherCtx);
+
+void handle_successor_predecessor(struct String_vector *children, char *znode_id);
+
+
+int find_position(struct String_vector *children, char *znode_id);
+
+void connect_successor(char *successor_id);
+
 /* Inicia o skeleton da tabela.
  * O main() do servidor deve chamar esta função antes de poder usar a
  * função invoke(). O parâmetro n_lists define o número de listas a
